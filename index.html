@@ -1,0 +1,4392 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>ELIMINATOR</title>
+  <style>
+    /* =========================================================
+       ELIMINATOR v5 — Temps visible • Estimation active • Feedback neutre
+       Single-file • localStorage only • Migration douce
+       ========================================================= */
+
+    :root{
+      /* base */
+      --bg:#0f1115;
+      --fg:#e9edf5;
+      --muted:#a8b0bd;
+
+      --panelA: rgba(14,16,24,0.62);
+      --panelB: rgba(10,11,18,0.72);
+
+      --glass: rgba(12,14,22,0.34);
+      --glass2: rgba(12,14,22,0.44);
+
+      --shadow: 0 18px 60px rgba(0,0,0,0.58);
+      --r: 22px;
+
+      /* accent (dark default = green) */
+      --accent: #38ff9a;
+      --accent2:#14c86f;
+      --accentText: rgba(56,255,154,0.92);
+
+      --accentGlow: 0 0 10px rgba(56,255,154,0.35), 0 0 28px rgba(20,200,111,0.20);
+      --accentGlowStrong: 0 0 12px rgba(56,255,154,0.55), 0 0 44px rgba(20,200,111,0.26);
+
+      /* neutral bars */
+      --barA:#f2f2f2;
+      --barB:#aeb7c7;
+
+      /* kiffance */
+      --kiff:#ff9b3d; /* orange soft */
+      --kiff2:#ff7f1e;
+      --kiffBg: rgba(255,155,61,0.10);
+
+      /* scale */
+      --fontScale: 1;
+      --densityPad: 16px; /* comfort */
+      --btnRadius: 14px;
+    }
+
+    /* THEME SWITCH (no structural change) */
+    body[data-theme="dark"]{
+      --bg:#0f1115;
+      --fg:#e9edf5;
+      --muted:#a8b0bd;
+
+      --panelA: rgba(14,16,24,0.62);
+      --panelB: rgba(10,11,18,0.72);
+
+      --glass: rgba(12,14,22,0.34);
+      --glass2: rgba(12,14,22,0.44);
+
+      --shadow: 0 18px 60px rgba(0,0,0,0.58);
+
+      /* keep green identity */
+      --accent: #38ff9a;
+      --accent2:#14c86f;
+      --accentText: rgba(56,255,154,0.92);
+
+      --accentGlow: 0 0 10px rgba(56,255,154,0.35), 0 0 28px rgba(20,200,111,0.20);
+      --accentGlowStrong: 0 0 12px rgba(56,255,154,0.55), 0 0 44px rgba(20,200,111,0.26);
+    }
+
+    body[data-theme="light"]{
+      --bg:#f6f7fb;
+      --fg:#141722;
+      --muted:#4b556a;
+
+      --panelA: rgba(255,255,255,0.78);
+      --panelB: rgba(245,247,252,0.78);
+
+      --glass: rgba(255,255,255,0.60);
+      --glass2: rgba(255,255,255,0.78);
+
+      --shadow: 0 16px 50px rgba(10,12,18,0.14);
+
+      /* accents désaturés (pas de vert néon sur fond clair) */
+      --accent: #2c4a7a;     /* bleu pétrole */
+      --accent2:#243c63;
+      --accentText: rgba(44,74,122,0.92);
+
+      --accentGlow: 0 0 10px rgba(44,74,122,0.16), 0 0 28px rgba(44,74,122,0.10);
+      --accentGlowStrong: 0 0 12px rgba(44,74,122,0.22), 0 0 44px rgba(44,74,122,0.12);
+
+      --barA:#2b2f3a;
+      --barB:#727a8a;
+    }
+
+    /* DENSITY MODES */
+    body[data-density="compact"]{
+      --densityPad: 12px;
+      --btnRadius: 12px;
+    }
+    body[data-density="comfort"]{
+      --densityPad: 16px;
+      --btnRadius: 14px;
+    }
+    body[data-density="cockpit"]{
+      --densityPad: 18px;
+      --btnRadius: 16px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: radial-gradient(1200px 600px at 50% 0%, rgba(255,255,255,0.04), transparent 70%), var(--bg);
+      color: var(--fg);
+      overflow-x:hidden;
+      transform: translateZ(0);
+      font-size: calc(16px * var(--fontScale));
+    }
+
+    .shell{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      gap:10px;
+      position:sticky;
+      top:0;
+      z-index: 50;
+      background: linear-gradient(180deg, rgba(15,17,21,0.86), rgba(15,17,21,0.00));
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
+      backdrop-filter: blur(10px) saturate(140%);
+    }
+    body[data-theme="light"] .topbar{
+      background: linear-gradient(180deg, rgba(246,247,251,0.92), rgba(246,247,251,0.00));
+    }
+
+    .topbar .left, .topbar .right{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+
+    /* Buttons */
+    .iconbtn, .btn, .tab{
+      border: none;
+      background: var(--glass);
+      color: var(--fg);
+      border-radius: var(--btnRadius);
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 900;
+      letter-spacing:0.08em;
+      text-transform: uppercase;
+      font-size: 12px;
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease, color 120ms ease;
+      user-select:none;
+    }
+    .iconbtn:hover, .btn:hover, .tab:hover{ background: var(--glass2); }
+    .iconbtn:active, .btn:active, .tab:active{ transform: translateY(1px); }
+    .iconbtn:disabled, .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+    .topFx{
+      color: var(--accentText);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22), var(--accentGlow);
+    }
+    .topFx:hover{
+      color: rgba(255,255,255,0.95);
+      box-shadow: 0 12px 34px rgba(0,0,0,0.26), var(--accentGlowStrong);
+      background: rgba(12,18,18,0.28);
+    }
+    body[data-theme="light"] .topFx:hover{
+      color: rgba(20,24,34,0.96);
+      background: rgba(255,255,255,0.86);
+    }
+
+    .chips{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .chip{
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      padding:7px 10px;
+      border-radius: 999px;
+      background: rgba(12,14,22,0.34);
+      color: rgba(255,255,255,0.74);
+      font-size: 12px;
+      font-weight: 900;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    }
+    body[data-theme="light"] .chip{
+      background: rgba(255,255,255,0.70);
+      color: rgba(20,24,34,0.78);
+    }
+    .chip b{ color: rgba(255,255,255,0.92); font-weight: 1000; }
+    body[data-theme="light"] .chip b{ color: rgba(20,24,34,0.92); }
+
+    .hero{
+      display:grid;
+      justify-items:center;
+      gap: 6px;
+      padding: 2px 12px 0;
+      flex: 0 0 auto;
+    }
+    .hero h1{
+      margin:0;
+      font-size: clamp(30px, 5.2vw, 56px);
+      font-weight: 1000;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      line-height: 1;
+      text-align:center;
+    }
+    .hero p{
+      margin:0;
+      color: rgba(255,255,255,0.62);
+      font-size: 12px;
+      letter-spacing:0.14em;
+      text-transform: uppercase;
+      text-align:center;
+    }
+    body[data-theme="light"] .hero p{ color: rgba(20,24,34,0.58); }
+
+    .floatLine{
+      min-height: 18px;
+      padding: 0 12px 4px;
+      text-align:center;
+      color: rgba(255,255,255,0.70);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 220ms ease, transform 220ms ease;
+      user-select:none;
+      flex: 0 0 auto;
+    }
+    body[data-theme="light"] .floatLine{ color: rgba(20,24,34,0.70); }
+    .floatLine.show{ opacity: 1; transform: translateY(0); }
+
+    /* TIME HUD (always visible) */
+    .timeHud{
+      display:flex;
+      justify-content:center;
+      padding: 0 12px 6px;
+      flex: 0 0 auto;
+    }
+    .timeHudInner{
+      width: min(920px, 96vw);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+    }
+    .hudPill{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      border-radius:999px;
+      padding: 8px 12px;
+      background: rgba(12,14,22,0.28);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+      font-weight: 950;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.82);
+      user-select:none;
+    }
+    body[data-theme="light"] .hudPill{
+      background: rgba(255,255,255,0.74);
+      color: rgba(20,24,34,0.78);
+    }
+    .hudPill b{ font-weight: 1000; color: rgba(255,255,255,0.95); }
+    body[data-theme="light"] .hudPill b{ color: rgba(20,24,34,0.92); }
+    .hudAccent{ color: var(--accentText); }
+
+    /* Stage */
+    .stage{
+      flex: 1 1 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+      min-height: 0;
+    }
+
+    .focusCard{
+      width: min(980px, 96vw);
+      border-radius: var(--r);
+      background:
+        radial-gradient(900px 420px at 50% 0%, rgba(255,255,255,0.10), transparent 62%),
+        linear-gradient(180deg, var(--panelA), var(--panelB));
+      box-shadow: var(--shadow);
+      padding: var(--densityPad);
+      display:grid;
+      gap: 14px;
+      -webkit-backdrop-filter: blur(14px) saturate(130%);
+      backdrop-filter: blur(14px) saturate(130%);
+      min-height: clamp(420px, 65vh, 760px);
+    }
+
+    /* Cockpit layout (2 columns) */
+    @media (min-width: 860px){
+      body[data-density="cockpit"] .focusCard{
+        grid-template-columns: 1.15fr 0.85fr;
+        grid-template-rows: auto 1fr;
+        align-items:stretch;
+      }
+      body[data-density="cockpit"] .focusLeft{ grid-column:1; grid-row:1 / span 2; }
+      body[data-density="cockpit"] .focusRight{ grid-column:2; grid-row:1 / span 2; display:flex; flex-direction:column; gap:14px; }
+    }
+
+    .barWrap{
+      border-radius: 999px;
+      height: 34px;
+      background: rgba(255,255,255,0.08);
+      overflow:hidden;
+      position:relative;
+    }
+    body[data-theme="light"] .barWrap{ background: rgba(20,24,34,0.08); }
+
+    .barFill{
+      height:100%;
+      width:100%;
+      background: linear-gradient(90deg, var(--barA), var(--barB));
+      transition: width 220ms ease;
+    }
+    .barLabel{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(10,12,16,0.92);
+      mix-blend-mode: screen;
+      user-select:none;
+      pointer-events:none;
+    }
+    body[data-theme="light"] .barLabel{
+      mix-blend-mode: normal;
+      color: rgba(20,24,34,0.82);
+    }
+
+    .target{ display:grid; gap: 10px; text-align:center; align-items:center; }
+    .targetTitle{
+      font-size: clamp(22px, 3.8vw, 34px);
+      font-weight: 1000;
+      line-height:1.15;
+      word-break: break-word;
+      padding: 0 6px;
+    }
+    .targetMeta{
+      color: rgba(255,255,255,0.62);
+      font-size: 12px;
+      letter-spacing:0.04em;
+      line-height:1.25;
+      padding: 0 6px;
+    }
+    body[data-theme="light"] .targetMeta{ color: rgba(20,24,34,0.58); }
+
+    /* Time-progress bar for current task (linear over estimate) */
+    .sbarWrap{
+      border-radius: 999px;
+      height: 16px;
+      background: rgba(255,255,255,0.08);
+      overflow:hidden;
+      position:relative;
+    }
+    body[data-theme="light"] .sbarWrap{ background: rgba(20,24,34,0.08); }
+
+    .sbarFill{
+      height:100%;
+      width:100%;
+      background: linear-gradient(90deg, rgba(242,242,242,0.85), rgba(174,183,199,0.70));
+      transition: width 200ms linear;
+    }
+    body[data-theme="light"] .sbarFill{
+      background: linear-gradient(90deg, rgba(44,74,122,0.32), rgba(44,74,122,0.18));
+    }
+
+    .sbarTicks{
+      position:absolute;
+      inset:0;
+      display:flex;
+      justify-content:space-between;
+      pointer-events:none;
+      opacity:0.60;
+    }
+    .sbarTicks i{
+      width:1px;
+      background: rgba(255,255,255,0.20);
+    }
+    body[data-theme="light"] .sbarTicks i{ background: rgba(20,24,34,0.18); }
+
+    .sbarLabel{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 11px;
+      font-weight: 1000;
+      color: rgba(10,12,16,0.90);
+      mix-blend-mode: screen;
+      user-select:none;
+      pointer-events:none;
+      letter-spacing:0.10em;
+      text-transform: uppercase;
+    }
+    body[data-theme="light"] .sbarLabel{
+      mix-blend-mode: normal;
+      color: rgba(20,24,34,0.72);
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items:center;
+      gap: 12px;
+      margin-top: 2px;
+    }
+    .actions .leftA{ display:flex; justify-content:flex-end; }
+    .actions .centerA{ display:flex; justify-content:center; }
+    .actions .rightA{ display:flex; justify-content:flex-start; }
+
+    .btnRoulette{
+      width: 108px;
+      height: 108px;
+      border-radius: 999px;
+      background:
+        radial-gradient(closest-side, rgba(255,255,255,0.16), rgba(0,0,0,0.06)),
+        linear-gradient(180deg, rgba(12,14,22,0.55), rgba(8,9,14,0.68));
+      color: var(--fg);
+      cursor:pointer;
+      font-weight: 1000;
+      letter-spacing:0.10em;
+      text-transform: uppercase;
+      display:grid;
+      place-items:center;
+      user-select:none;
+      position:relative;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+      border: none;
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+    body[data-theme="light"] .btnRoulette{
+      background:
+        radial-gradient(closest-side, rgba(44,74,122,0.12), rgba(255,255,255,0.72)),
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(245,247,252,0.86));
+      color: rgba(20,24,34,0.92);
+      box-shadow: 0 16px 40px rgba(10,12,18,0.14);
+    }
+
+    .btnRoulette .ring{
+      position:absolute; inset:10px;
+      border-radius: 999px;
+      border:1px dashed rgba(255,255,255,0.18);
+      opacity:0.75;
+    }
+    body[data-theme="light"] .btnRoulette .ring{ border-color: rgba(20,24,34,0.16); }
+
+    .btnRoulette:hover{ background: rgba(12,14,22,0.62); }
+    body[data-theme="light"] .btnRoulette:hover{ background: rgba(255,255,255,0.92); }
+    .btnRoulette:active{ transform: translateY(1px); }
+    .btnRoulette.spinning .ring{ animation: spin 650ms linear infinite; }
+    @keyframes spin{ from{ transform: rotate(0deg);} to{ transform: rotate(360deg);} }
+
+    .btnBig{
+      min-height: 64px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background:
+        radial-gradient(900px 260px at 30% 20%, rgba(255,255,255,0.12), transparent 60%),
+        linear-gradient(180deg, rgba(12,14,22,0.52), rgba(8,9,14,0.68));
+      font-weight: 1000;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+      border:none;
+      color: var(--fg);
+      cursor:pointer;
+      white-space:nowrap;
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      user-select:none;
+    }
+    body[data-theme="light"] .btnBig{
+      background:
+        radial-gradient(900px 260px at 30% 20%, rgba(44,74,122,0.08), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,0.86), rgba(245,247,252,0.86));
+      color: rgba(20,24,34,0.92);
+      box-shadow: 0 12px 30px rgba(10,12,18,0.12);
+    }
+    .btnBig:hover{ background: rgba(12,14,22,0.62); }
+    body[data-theme="light"] .btnBig:hover{ background: rgba(255,255,255,0.96); }
+    .btnBig:active{ transform: translateY(1px); }
+
+    .subActions{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .btnMiniMenu{ padding: 12px 12px; border-radius: 16px; }
+
+    .hint{
+      text-align:center;
+      color: rgba(255,255,255,0.55);
+      font-size: 12px;
+      line-height:1.25;
+      padding: 4px 12px 12px;
+      opacity:0.95;
+      flex: 0 0 auto;
+    }
+    body[data-theme="light"] .hint{ color: rgba(20,24,34,0.58); }
+
+    /* ===== Drawer ===== */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.60);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 160ms ease;
+      z-index: 90;
+    }
+    .overlay.show{ opacity:1; pointer-events:auto; }
+
+    .drawer{
+      position:fixed;
+      top:0; left:0;
+      height:100vh;
+      width: min(680px, 92vw);
+      background:
+        radial-gradient(900px 420px at 40% 0%, rgba(56,255,154,0.10), transparent 62%),
+        radial-gradient(900px 420px at 10% 30%, rgba(255,255,255,0.08), transparent 62%),
+        linear-gradient(180deg, rgba(14,16,24,0.78), rgba(9,10,16,0.86));
+      transform: translateX(-110%);
+      transition: transform 180ms ease;
+      z-index: 100;
+      display:grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 12px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      backdrop-filter: blur(18px) saturate(140%);
+    }
+    body[data-theme="light"] .drawer{
+      background:
+        radial-gradient(900px 420px at 40% 0%, rgba(44,74,122,0.10), transparent 62%),
+        radial-gradient(900px 420px at 10% 30%, rgba(255,255,255,0.85), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,0.88), rgba(245,247,252,0.88));
+    }
+    .drawer.show{ transform: translateX(0); }
+
+    .drawerHeader{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+    }
+    .drawerHeader .h{
+      font-weight: 1000;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: var(--accentText);
+      text-shadow: 0 0 16px rgba(0,0,0,0.20);
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .tab.active{
+      background: rgba(12,18,18,0.26);
+      color: rgba(255,255,255,0.92);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.16), var(--accentGlow);
+    }
+    body[data-theme="light"] .tab.active{
+      background: rgba(255,255,255,0.86);
+      color: rgba(20,24,34,0.92);
+    }
+
+    .drawerBody{
+      overflow:auto;
+      padding-right: 4px;
+      display:grid;
+      gap: 12px;
+      align-content:start;
+    }
+
+    .card{
+      border-radius: 18px;
+      background: rgba(12,14,22,0.30);
+      padding: 12px;
+      display:grid;
+      gap:10px;
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      backdrop-filter: blur(16px) saturate(150%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    }
+    body[data-theme="light"] .card{
+      background: rgba(255,255,255,0.72);
+      box-shadow: 0 10px 30px rgba(10,12,18,0.10);
+    }
+
+    .cardTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      color: rgba(255,255,255,0.70);
+      font-weight: 1000;
+      letter-spacing:0.14em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    body[data-theme="light"] .cardTitle{ color: rgba(20,24,34,0.62); }
+
+    textarea, select, input[type="text"], input[type="number"]{
+      font:inherit;
+      border:none;
+      background: rgba(0,0,0,0.18);
+      color: var(--fg);
+      border-radius: 14px;
+      padding: 10px 12px;
+      outline:none;
+      font-size:13px;
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    body[data-theme="light"] textarea,
+    body[data-theme="light"] select,
+    body[data-theme="light"] input[type="text"],
+    body[data-theme="light"] input[type="number"]{
+      background: rgba(20,24,34,0.06);
+      color: rgba(20,24,34,0.92);
+    }
+    textarea{ width:100%; min-height: 140px; resize: vertical; line-height:1.35; }
+
+    .rowBtns{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .list{ display:grid; gap:8px; }
+    .trow{
+      border-radius: 16px;
+      background: rgba(0,0,0,0.14);
+      padding: 10px;
+      display:grid;
+      gap:8px;
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    body[data-theme="light"] .trow{ background: rgba(20,24,34,0.04); }
+
+    .trowTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .tname{
+      font-weight: 950;
+      font-size: 14px;
+      line-height:1.2;
+      word-break: break-word;
+    }
+    .tmini{
+      color: rgba(255,255,255,0.66);
+      font-size: 12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      line-height:1.15;
+    }
+    body[data-theme="light"] .tmini{ color: rgba(20,24,34,0.62); }
+
+    .tacts{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+    }
+
+    .done{ text-decoration: line-through; opacity:0.55; }
+
+    .sbarMiniWrap{
+      border-radius: 999px;
+      height: 12px;
+      background: rgba(255,255,255,0.08);
+      overflow:hidden;
+      position:relative;
+    }
+    body[data-theme="light"] .sbarMiniWrap{ background: rgba(20,24,34,0.08); }
+    .sbarMiniFill{
+      height:100%;
+      background: linear-gradient(90deg, rgba(242,242,242,0.78), rgba(174,183,199,0.62));
+      transition: width 180ms ease;
+    }
+    body[data-theme="light"] .sbarMiniFill{
+      background: linear-gradient(90deg, rgba(44,74,122,0.32), rgba(44,74,122,0.16));
+    }
+
+    details{
+      border-radius: 18px;
+      overflow:hidden;
+      background: rgba(12,14,22,0.22);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    body[data-theme="light"] details{ background: rgba(255,255,255,0.66); }
+
+    summary{
+      cursor:pointer;
+      padding: 10px 12px;
+      color: rgba(255,255,255,0.66);
+      font-weight: 1000;
+      letter-spacing:0.14em;
+      text-transform: uppercase;
+      font-size: 11px;
+      user-select:none;
+      list-style:none;
+    }
+    body[data-theme="light"] summary{ color: rgba(20,24,34,0.62); }
+
+    details > .inside{
+      padding: 10px 12px 12px;
+      display:grid;
+      gap:10px;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      background: rgba(11,13,18,0.74);
+      border:none;
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--fg);
+      font-size: 13px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 160ms ease, transform 160ms ease;
+      max-width: min(900px, calc(100vw - 24px));
+      box-shadow: var(--shadow);
+      white-space:pre-wrap;
+      z-index: 120;
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    body[data-theme="light"] .toast{
+      background: rgba(255,255,255,0.92);
+      color: rgba(20,24,34,0.92);
+      box-shadow: 0 16px 50px rgba(10,12,18,0.14);
+    }
+    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-6px); }
+
+    canvas#fx{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index: 110;
+    }
+
+    /* Minimal overlay for Calibration feedback (auto-close) */
+    .modalOverlay{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,0.62);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 180ms ease;
+      z-index: 130;
+      padding: 14px;
+    }
+    .modalOverlay.show{ opacity:1; pointer-events:auto; }
+
+    .modalCard{
+      width: min(720px, 94vw);
+      border-radius: 22px;
+      background:
+        radial-gradient(900px 420px at 30% 0%, rgba(56,255,154,0.10), transparent 62%),
+        linear-gradient(180deg, rgba(14,16,24,0.82), rgba(9,10,16,0.90));
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display:grid;
+      gap: 10px;
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      backdrop-filter: blur(18px) saturate(150%);
+    }
+    body[data-theme="light"] .modalCard{
+      background:
+        radial-gradient(900px 420px at 30% 0%, rgba(44,74,122,0.10), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,247,252,0.92));
+      box-shadow: 0 18px 60px rgba(10,12,18,0.18);
+    }
+
+    .modalTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .modalTop .title{
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accentText);
+      font-size: 12px;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+    }
+    .kv .k{
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.62);
+      font-weight: 950;
+    }
+    body[data-theme="light"] .kv .k{ color: rgba(20,24,34,0.58); }
+    .kv .v{
+      font-size: 13px;
+      font-weight: 950;
+      color: rgba(255,255,255,0.92);
+    }
+    body[data-theme="light"] .kv .v{ color: rgba(20,24,34,0.92); }
+    .modalNote{
+      color: rgba(255,255,255,0.70);
+      font-size: 13px;
+      line-height:1.35;
+    }
+    body[data-theme="light"] .modalNote{ color: rgba(20,24,34,0.70); }
+
+    /* Kiffance overlay (no manual close) */
+    .kiffOverlay .modalCard{
+      background:
+        radial-gradient(900px 420px at 30% 0%, rgba(255,155,61,0.16), transparent 62%),
+        linear-gradient(180deg, rgba(14,16,24,0.86), rgba(9,10,16,0.92));
+    }
+    body[data-theme="light"] .kiffOverlay .modalCard{
+      background:
+        radial-gradient(900px 420px at 30% 0%, rgba(255,155,61,0.18), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,0.94), rgba(245,247,252,0.94));
+    }
+    .kiffBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      padding: 8px 12px;
+      background: rgba(255,155,61,0.14);
+      color: rgba(255,255,255,0.92);
+      font-weight: 1000;
+      letter-spacing:0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+    }
+    body[data-theme="light"] .kiffBadge{
+      background: rgba(255,155,61,0.18);
+      color: rgba(20,24,34,0.92);
+    }
+
+    /* Estimation gate (no keyboard) */
+    .estGate{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      padding-top: 6px;
+    }
+    .pillBtn{
+      border:none;
+      border-radius:999px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.18);
+      color: var(--fg);
+      font-weight: 1000;
+      letter-spacing:0.10em;
+      text-transform: uppercase;
+      font-size: 12px;
+      cursor:pointer;
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+      transition: transform 120ms ease, background 120ms ease;
+      user-select:none;
+    }
+    body[data-theme="light"] .pillBtn{
+      background: rgba(20,24,34,0.06);
+      color: rgba(20,24,34,0.92);
+    }
+    .pillBtn:hover{ background: rgba(0,0,0,0.24); }
+    body[data-theme="light"] .pillBtn:hover{ background: rgba(20,24,34,0.10); }
+    .pillBtn:active{ transform: translateY(1px); }
+
+    .pillBtn.accent{
+      background: rgba(56,255,154,0.12);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.16), var(--accentGlow);
+      color: rgba(255,255,255,0.92);
+    }
+    body[data-theme="light"] .pillBtn.accent{
+      background: rgba(44,74,122,0.12);
+      color: rgba(20,24,34,0.92);
+    }
+
+    .pillBtn.kiff{
+      background: rgba(255,155,61,0.16);
+      color: rgba(255,255,255,0.92);
+    }
+    body[data-theme="light"] .pillBtn.kiff{
+      background: rgba(255,155,61,0.18);
+      color: rgba(20,24,34,0.92);
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 520px){
+      .btnRoulette{ width: 100px; height: 100px; }
+      .btnBig{ min-height: 60px; padding: 14px 16px; }
+      .actions{ gap: 10px; }
+      .barWrap{ height: 32px; }
+      .kv{ grid-template-columns: 1fr; }
+    }
+    @media (max-width: 380px){
+      .actions{ grid-template-columns: 1fr; }
+      .actions .leftA, .actions .centerA, .actions .rightA{ justify-content:center; }
+      .btnBig{ width: 92vw; }
+      .timeHudInner{ justify-content:center; }
+    }
+  </style>
+</head>
+
+<body data-theme="dark" data-density="comfort">
+  <canvas id="fx"></canvas>
+
+  <div class="shell">
+    <div class="topbar" id="topbar">
+      <div class="left">
+        <button class="iconbtn topFx" id="btnMenu" aria-label="Menu">Menu</button>
+        <button class="iconbtn topFx" id="btnReset" aria-label="Reset">Reset</button>
+      </div>
+
+      <div class="right chips" aria-label="Compteurs">
+        <span class="chip">Départ <b id="startTasks">0</b></span>
+        <span class="chip">Reste <b id="leftTasks">0</b></span>
+        <span class="chip">ETHORION <b id="leftEth">0</b>/<b id="startEth">0</b></span>
+        <span class="chip">Éliminé <b id="elimEth">0</b></span>
+        <span class="chip">Tâches <b id="doneTasks">0</b>/<b id="startTasks2">0</b></span>
+      </div>
+    </div>
+
+    <header class="hero">
+      <h1>ELIMINATOR</h1>
+      <p>Dégommez-les tous</p>
+    </header>
+
+    <div class="floatLine" id="floatLine"> </div>
+
+    <!-- TIME HUD (always visible when focus active or pending estimate) -->
+    <div class="timeHud" aria-label="Temps">
+      <div class="timeHudInner">
+        <div class="hudPill" id="hudState"><span class="hudAccent">État</span> <b id="hudStateV">—</b></div>
+        <div class="hudPill" id="hudEst"><span>Estimé</span> <b id="hudEstV">—</b></div>
+        <div class="hudPill" id="hudElapsed"><span>Écoulé</span> <b id="hudElapsedV">—</b></div>
+        <div class="hudPill" id="hudCat"><span>Cat</span> <b id="hudCatV">—</b></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <section class="focusCard" aria-label="Focus">
+        <!-- Global bar = reste ETH du jour -->
+        <div class="barWrap" aria-label="Progression globale">
+          <div class="barFill" id="gFill"></div>
+          <div class="barLabel" id="gLabel">100%</div>
+        </div>
+
+        <div class="focusLeft">
+          <div class="target" aria-label="Cible">
+            <div class="targetTitle" id="focusTitle">CIBLE EN COURS DE RECHERCHE</div>
+            <div class="targetMeta" id="focusMeta">—</div>
+
+            <div class="chips" style="justify-content:center;">
+              <span class="chip">ETH <b id="focusEth">0</b></span>
+              <span class="chip">P <b id="focusPrio">—</b></span>
+              <span class="chip">Énergie <b id="focusEnergy">—</b></span>
+              <span class="chip">Mode <b id="focusMode">—</b></span>
+              <span class="chip">📌 <b id="focusPinned">—</b></span>
+            </div>
+
+            <!-- Task time bar (linear over estimate; never punitive) -->
+            <div class="sbarWrap" aria-label="Temps estimé restant">
+              <div class="sbarFill" id="tFill"></div>
+              <div class="sbarTicks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <div class="sbarLabel" id="tLabel">—</div>
+            </div>
+
+            <!-- Estimation gate (shown when pending) -->
+            <div class="estGate" id="estGate" style="display:none;">
+              <button class="pillBtn" id="estMinus1">-1 ETH</button>
+              <button class="pillBtn" id="estPlus1">+1 ETH</button>
+              <button class="pillBtn" id="estPlus2">+2 ETH</button>
+              <button class="pillBtn" id="estPlus5">+5 ETH</button>
+              <button class="pillBtn accent" id="estKeep">Garder</button>
+              <button class="pillBtn accent" id="estStart">Valider & Focus</button>
+            </div>
+
+            <div class="actions" aria-label="Actions">
+              <div class="leftA">
+                <button class="btnBig" id="btnSkip" aria-label="Passer">Passer</button>
+              </div>
+
+              <div class="centerA">
+                <button class="btnRoulette" id="btnRoulette" aria-label="Roulette">
+                  <span class="ring"></span>
+                  Roulette
+                </button>
+              </div>
+
+              <div class="rightA">
+                <button class="btnBig" id="btnDego" aria-label="Dégommer">Dégommer 1 ETHORION</button>
+              </div>
+            </div>
+
+            <div class="subActions">
+              <button class="btn topFx btnMiniMenu" id="btnMiniMenu">Menu</button>
+              <button class="btn" id="btnNotes">Notes</button>
+              <button class="btn" id="btnDone">Terminer</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="focusRight" aria-label="Cockpit" style="display:none;">
+          <!-- This column is activated by density=cockpit on wide screens -->
+          <div class="card" style="margin:0;">
+            <div class="cardTitle"><span>Repères</span><span>neutres</span></div>
+            <div class="tmini" id="cockpitInfo">
+              Temps visible. Estimation active. Feedback neutre.
+            </div>
+          </div>
+          <div class="card" style="margin:0;">
+            <div class="cardTitle"><span>Kiffance</span><span>budget</span></div>
+            <div class="tmini" id="kiffBudgetInfo">—</div>
+            <div class="rowBtns" style="justify-content:flex-start;">
+              <button class="btn" id="btnKiffTest">Test</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="hint">
+      Import : colle n’importe quel texte multi-lignes. Les lignes finissant par “:” sont des catégories. Le reste = tâches.
+      Raccourci : Ctrl/⌘+Enter pour ajouter depuis Inbox.
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer" aria-label="Menu latéral">
+    <div class="drawerHeader">
+      <div class="h">Options</div>
+      <button class="btn topFx" id="btnClose">Fermer</button>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <div class="drawerBody" id="drawerBody"></div>
+
+    <div class="rowBtns">
+      <button class="btn topFx" id="btnUndo">Undo</button>
+      <button class="btn topFx" id="btnRedo">Redo</button>
+    </div>
+  </aside>
+
+  <!-- Modal (Calibration + Kiffance) -->
+  <div class="modalOverlay" id="modalOverlay" aria-label="Modal">
+    <div class="modalCard" id="modalCard">
+      <div class="modalTop">
+        <div class="title" id="modalTitle">—</div>
+        <button class="btn topFx" id="modalOk" style="display:none;">OK</button>
+      </div>
+      <div id="modalBody"></div>
+      <div class="modalNote" id="modalNote">—</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =========================================================
+     Core principle:
+     - Render time perceptible (visible)
+     - Force estimation active before focus
+     - Provide immediate neutral feedback after action
+     ========================================================= */
+
+  // =========================
+  // Storage + State
+  // =========================
+  const LS_KEY = "eliminator_app_v5";
+  const MAX_HISTORY = 80;
+  const ETH_MS = 5 * 60 * 1000; // 1 eth = 5 minutes
+
+  const el = (id)=>document.getElementById(id);
+  const now = ()=>Date.now();
+  const clamp = (n,a,b)=>Math.max(a, Math.min(b,n));
+  const uid = ()=> Math.random().toString(36).slice(2,10)+"-"+Date.now().toString(36);
+
+  // UI refs
+  const startTasksEl  = el("startTasks");
+  const startTasks2El = el("startTasks2");
+  const leftTasksEl   = el("leftTasks");
+  const startEthEl    = el("startEth");
+  const leftEthEl     = el("leftEth");
+  const elimEthEl     = el("elimEth");
+  const doneTasksEl   = el("doneTasks");
+
+  const gFill = el("gFill");
+  const gLabel = el("gLabel");
+  const tFill = el("tFill");
+  const tLabel = el("tLabel");
+
+  const focusTitle = el("focusTitle");
+  const focusMeta = el("focusMeta");
+  const focusEth = el("focusEth");
+  const focusPrio = el("focusPrio");
+  const focusEnergy = el("focusEnergy");
+  const focusMode = el("focusMode");
+  const focusPinned = el("focusPinned");
+
+  const floatLine = el("floatLine");
+
+  const btnMenu = el("btnMenu");
+  const btnMiniMenu = el("btnMiniMenu");
+  const btnReset = el("btnReset");
+  const btnRoulette = el("btnRoulette");
+  const btnDego = el("btnDego");
+  const btnNotes = el("btnNotes");
+  const btnDone = el("btnDone");
+  const btnSkip = el("btnSkip");
+  const btnKiffTest = el("btnKiffTest");
+
+  // Est gate
+  const estGate = el("estGate");
+  const estMinus1 = el("estMinus1");
+  const estPlus1 = el("estPlus1");
+  const estPlus2 = el("estPlus2");
+  const estPlus5 = el("estPlus5");
+  const estKeep = el("estKeep");
+  const estStart = el("estStart");
+
+  // HUD
+  const hudStateV = el("hudStateV");
+  const hudEstV = el("hudEstV");
+  const hudElapsedV = el("hudElapsedV");
+  const hudCatV = el("hudCatV");
+
+  // Drawer
+  const overlay = el("overlay");
+  const drawer = el("drawer");
+  const btnClose = el("btnClose");
+  const tabs = el("tabs");
+  const drawerBody = el("drawerBody");
+  const btnUndo = el("btnUndo");
+  const btnRedo = el("btnRedo");
+
+  // Modal
+  const modalOverlay = el("modalOverlay");
+  const modalCard = el("modalCard");
+  const modalTitle = el("modalTitle");
+  const modalBody = el("modalBody");
+  const modalNote = el("modalNote");
+  const modalOk = el("modalOk");
+
+  // Toast + FX
+  const toast = el("toast");
+  const fxCanvas = el("fx");
+  const fx = fxCanvas.getContext("2d");
+
+  // Cockpit info
+  const kiffBudgetInfo = el("kiffBudgetInfo");
+
+  // =========================
+  // Helpers: date / formatting
+  // =========================
+  function isoDay(d = new Date()){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const da = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${da}`;
+  }
+
+  function mmss(ms){
+    ms = Math.max(0, ms|0);
+    const s = Math.floor(ms/1000);
+    const m = Math.floor(s/60);
+    const ss = String(s%60).padStart(2,"0");
+    if(m < 60) return `${String(m).padStart(2,"0")}:${ss}`;
+    const h = Math.floor(m/60);
+    const mm = String(m%60).padStart(2,"0");
+    return `${String(h).padStart(2,"0")}:${mm}`;
+  }
+
+  function hhmmHuman(ms){
+    ms = Math.max(0, ms|0);
+    const totalMin = Math.round(ms/60000);
+    const h = Math.floor(totalMin/60);
+    const m = totalMin%60;
+    if(h<=0) return `${m} min`;
+    if(m===0) return `${h} h`;
+    return `${h} h ${m} min`;
+  }
+
+  function ethToMs(eth){ return Math.max(1, eth|0) * ETH_MS; }
+  function msToEth(ms){ return Math.max(1, Math.round((ms||0)/ETH_MS)); }
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  // =========================
+  // Default data + profiles + banks + kiffance library
+  // =========================
+  function defaultBanks(){
+    return {
+      lines: [
+        "Un fragment en moins. Rien d'héroïque. Juste réel.",
+        "Ça avance. Sans drame. Merci.",
+        "Tu viens de réduire l'entropie d'un cran.",
+        "C'est fait. Ton cerveau peut respirer."
+      ],
+      doneNeutral: [
+        "Calibration en cours. Rien à corriger maintenant.",
+        "On enregistre. Pas de jugement. Juste des données.",
+        "Temps visible → apprentissage implicite.",
+        "OK. Prochaine cible, même énergie, même douceur."
+      ],
+      overrunNeutral: [
+        "Temps estimé dépassé. Tu continues ou tu ajustes.",
+        "L'estimation est finie. Toi, tu n'es pas obligée.",
+        "Dépassement neutre. Le monde ne brûle pas."
+      ],
+      finishAll: [
+        "Plus rien à dégommer. Ton backlog vient de perdre son droit de vote.",
+        "Mission complète. Silence administratif.",
+        "Tout est tombé. Tu peux te reposer sans te justifier."
+      ],
+      kiffReturn: [
+        "Retour à l'action. Petit pas, pas besoin d'élan.",
+        "Pause finie. On reprend juste le fil.",
+        "On revient. Sans violence."
+      ]
+    };
+  }
+
+  function defaultKiffanceLibrary(){
+    // Interdits: scrolling, réseaux ouverts, contenus captateurs.
+    // Objectif: bref, chronométré, légèrement frustrant, régulateur exécutif.
+    return {
+      decharge: [
+        { label:"30 squats lents + eau", durationMin:5, tags:["corps","décharge"], difficulty:2 },
+        { label:"Marche rapide dans le couloir (sans téléphone)", durationMin:5, tags:["corps","décharge"], difficulty:1 },
+        { label:"Étirements nuque/épaules + respiration", durationMin:5, tags:["corps","décharge"], difficulty:1 },
+        { label:"Ranger 10 objets visibles (mini-reset)", durationMin:5, tags:["environnement"], difficulty:2 }
+      ],
+      microCognitive: [
+        { label:"Écrire 5 lignes 'ce que je fais ensuite'", durationMin:5, tags:["cognition","plan"], difficulty:1 },
+        { label:"Lire 2 pages d'un texte non-captateur", durationMin:10, tags:["lecture"], difficulty:2 },
+        { label:"Mini mind-map: tâche suivante en 6 mots", durationMin:5, tags:["cognition"], difficulty:1 },
+        { label:"Écouter 1 musique (1 seule) puis stop", durationMin:5, tags:["dopamine","sobriété"], difficulty:2 }
+      ],
+      socialeUltraControlee: [
+        { label:"Envoyer 1 message utile (une seule personne)", durationMin:5, tags:["social","contrôlé"], difficulty:2 },
+        { label:"Dire 'je pense à toi' à quelqu'un (sans conversation)", durationMin:5, tags:["social","contrôlé"], difficulty:2 },
+        { label:"Micro-check: agenda / planning (2 min) + stop", durationMin:5, tags:["organisation"], difficulty:2 }
+      ],
+      sensRecentrage: [
+        { label:"Respiration 4-6 (4s inspire / 6s expire)", durationMin:5, tags:["respiration"], difficulty:1 },
+        { label:"Thé/eau chaude: boire lentement sans écran", durationMin:5, tags:["sensoriel"], difficulty:1 },
+        { label:"Regarder dehors 2 minutes + marcher 3", durationMin:5, tags:["sensoriel","dehors"], difficulty:1 },
+        { label:"Scan corporel 3 zones + relâchement", durationMin:5, tags:["sensoriel"], difficulty:1 }
+      ]
+    };
+  }
+
+  function defaultProfiles(){
+    return [
+      {
+        id:"profile_default",
+        name:"Défaut",
+        settings:{
+          theme:"dark",
+          accentPreset:"green",
+          density:"comfort",
+          fontScale:1.0,
+          sound:{ enabled:true, volume:0.55, boom:true },
+          celebration:{ style:"modal", autoCloseMs:2200 },
+          roulette:{ focusLockSec:20, warmStart:true, pinWeight:2.4 },
+          kiffance:{
+            enabled:true,
+            budgetMinEth:20,
+            budgetMaxEth:35,
+            maxConsecutive:2,
+            shortOnOverrun:true
+          }
+        }
+      },
+      {
+        id:"profile_soft",
+        name:"Soft",
+        settings:{
+          theme:"dark",
+          accentPreset:"green",
+          density:"comfort",
+          fontScale:1.05,
+          sound:{ enabled:false, volume:0.45, boom:false },
+          celebration:{ style:"toast", autoCloseMs:1800 },
+          roulette:{ focusLockSec:30, warmStart:true, pinWeight:2.8 },
+          kiffance:{
+            enabled:true,
+            budgetMinEth:18,
+            budgetMaxEth:28,
+            maxConsecutive:2,
+            shortOnOverrun:true
+          }
+        }
+      },
+      {
+        id:"profile_ultra",
+        name:"Ultra-focus",
+        settings:{
+          theme:"dark",
+          accentPreset:"green",
+          density:"cockpit",
+          fontScale:1.0,
+          sound:{ enabled:true, volume:0.40, boom:true },
+          celebration:{ style:"none", autoCloseMs:0 },
+          roulette:{ focusLockSec:60, warmStart:true, pinWeight:3.2 },
+          kiffance:{
+            enabled:true,
+            budgetMinEth:25,
+            budgetMaxEth:40,
+            maxConsecutive:1,
+            shortOnOverrun:true
+          }
+        }
+      }
+    ];
+  }
+
+  function initial(){
+    const today = isoDay();
+    return {
+      version: 5,
+
+      day: { id: today, startTasks: 0, startEth: 0 },
+      focusId: null,
+
+      // Focus session (time training)
+      focusSession: {
+        state: "idle",           // idle | pending_estimate | focusing | kiffance
+        taskId: null,
+        estEth: null,
+        estMs: null,
+        startedAt: null,
+        workedMs: 0,
+        lastTickAt: null,
+        lockUntil: 0
+      },
+
+      energyProfile: { level: 2, motivation: 2 }, // 1..3
+
+      mode: { pick: "roulette", orderBy: "prio", includeCats: [] },
+
+      ui: { activeTab: "inbox", sort: "order" },
+
+      // Settings + profiles + banks + kiffance library
+      settings: defaultProfiles()[0].settings,
+      profiles: defaultProfiles(),
+      banks: defaultBanks(),
+      kiffanceLibrary: defaultKiffanceLibrary(),
+
+      // Kiffance runtime budget
+      kiffanceMeta: {
+        sinceLastBreakEth: 0,
+        consecutive: 0,
+        nextBudgetEth: 26,
+        lastBreakAt: null
+      },
+
+      // Calibration store
+      timeCalibration: {
+        // entries: {ts, title, category, estEth, estMs, realMs, realEth, deltaEth}
+        entries: [],
+        // catStats: { [cat]: { n, avgDeltaEth, avgRatio } }
+        catStats: {}
+      },
+
+      tasks: [],
+
+      sets: [
+        {
+          id: "set_daily_starter",
+          name: "Starter quotidien",
+          lines: [
+            "ORGANISATION:",
+            "Vérifier l’horaire + adapter planning — 6 ethorions — importance 3",
+            "Emails rapides — 2 ethorions — importance 2",
+            "Appels indispensables — 2 ethorions — importance 2",
+            "Un dossier lourd (1) — 10 ethorions — importance 3"
+          ]
+        }
+      ],
+
+      scratch: "",
+
+      history: { undo: [], redo: [] },
+      events: [],
+    };
+  }
+
+  let state = load() || initial();
+
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+  function migrateToV5(obj){
+    const base = initial();
+
+    // Merge shallow but keep existing arrays where present
+    obj.version = 5;
+
+    if(!obj.day) obj.day = base.day;
+    if(!obj.energyProfile) obj.energyProfile = base.energyProfile;
+    if(!obj.mode) obj.mode = base.mode;
+    if(!obj.ui) obj.ui = base.ui;
+    if(!Array.isArray(obj.tasks)) obj.tasks = [];
+    if(!Array.isArray(obj.sets)) obj.sets = base.sets;
+    if(typeof obj.scratch !== "string") obj.scratch = "";
+
+    if(!obj.history) obj.history = {undo:[], redo:[]};
+    if(!Array.isArray(obj.events)) obj.events = [];
+
+    if(!obj.settings) obj.settings = base.settings;
+    if(!Array.isArray(obj.profiles)) obj.profiles = base.profiles;
+    if(!obj.banks) obj.banks = base.banks;
+    if(!obj.kiffanceLibrary) obj.kiffanceLibrary = base.kiffanceLibrary;
+
+    if(!obj.focusSession) obj.focusSession = base.focusSession;
+    if(!obj.kiffanceMeta) obj.kiffanceMeta = base.kiffanceMeta;
+    if(!obj.timeCalibration) obj.timeCalibration = base.timeCalibration;
+    if(!Array.isArray(obj.timeCalibration.entries)) obj.timeCalibration.entries = [];
+    if(!obj.timeCalibration.catStats) obj.timeCalibration.catStats = {};
+
+    // Ensure task fields
+    obj.tasks.forEach(t=>{
+      if(!t.id) t.id = uid();
+      if(typeof t.title !== "string") t.title = "Tâche";
+      if(typeof t.category !== "string") t.category = "Sans catégorie";
+      if(typeof t.ethorionTotal !== "number") t.ethorionTotal = 3;
+      if(typeof t.ethorionRemaining !== "number") t.ethorionRemaining = t.ethorionTotal;
+      if(typeof t.priority !== "number") t.priority = 2;
+      if(typeof t.energyTag !== "number") t.energyTag = 2;
+      if(typeof t.notes !== "string") t.notes = "";
+      if(typeof t.done !== "boolean") t.done = false;
+      if(typeof t.order !== "number") t.order = 1;
+      if(!t.createdAt) t.createdAt = now();
+      if(!("doneAt" in t)) t.doneAt = null;
+      if(!("pinned" in t)) t.pinned = false;
+
+      // time tracking per task (optional)
+      if(!("workedMs" in t)) t.workedMs = 0;
+      if(!("lastFocusAt" in t)) t.lastFocusAt = null;
+    });
+
+    return obj;
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return null;
+      const obj = JSON.parse(raw);
+      if(!obj || !Array.isArray(obj.tasks)) return null;
+      if((obj.version||0) < 5) return migrateToV5(obj);
+      // sanity
+      return migrateToV5(obj);
+    }catch{ return null; }
+  }
+
+  // =========================
+  // History + Log
+  // =========================
+  function snapshot(){
+    const s = structuredClone({...state});
+    s.history = {undo:[], redo:[]};
+    return s;
+  }
+
+  function logEvent(text){
+    state.events.push({ t: now(), text: String(text).slice(0,260) });
+    state.events = state.events.slice(-300);
+  }
+
+  function pushHistory(label){
+    state.history.undo.push(snapshot());
+    if(state.history.undo.length > MAX_HISTORY) state.history.undo.shift();
+    state.history.redo = [];
+    if(label) logEvent(label);
+    save();
+    updateUndoRedo();
+  }
+
+  function undo(){
+    if(!state.history.undo.length) return;
+    const prev = state.history.undo.pop();
+    const cur = snapshot();
+    state.history.redo.push(cur);
+    const keep = state.history;
+    state = {...prev, history: keep};
+    save();
+    renderAll();
+  }
+
+  function redo(){
+    if(!state.history.redo.length) return;
+    const next = state.history.redo.pop();
+    const cur = snapshot();
+    state.history.undo.push(cur);
+    const keep = state.history;
+    state = {...next, history: keep};
+    save();
+    renderAll();
+  }
+
+  function updateUndoRedo(){
+    btnUndo.disabled = state.history.undo.length===0;
+    btnRedo.disabled = state.history.redo.length===0;
+  }
+
+  // =========================
+  // Settings -> UI
+  // =========================
+  function applySettingsToUI(){
+    const s = state.settings || {};
+    const theme = s.theme || "dark";
+    const density = s.density || "comfort";
+    const fontScale = clamp(Number(s.fontScale||1), 0.85, 1.25);
+
+    document.body.dataset.theme = theme;
+    document.body.dataset.density = density;
+    document.documentElement.style.setProperty("--fontScale", String(fontScale));
+
+    // Accent preset (kept simple: map to accent variables)
+    const preset = s.accentPreset || (theme==="dark" ? "green" : "petrol");
+    if(theme==="dark"){
+      if(preset==="green"){
+        document.documentElement.style.setProperty("--accent", "#38ff9a");
+        document.documentElement.style.setProperty("--accent2", "#14c86f");
+        document.documentElement.style.setProperty("--accentText", "rgba(56,255,154,0.92)");
+      } else if(preset==="amber"){
+        document.documentElement.style.setProperty("--accent", "#ffb15a");
+        document.documentElement.style.setProperty("--accent2", "#ff8a1e");
+        document.documentElement.style.setProperty("--accentText", "rgba(255,177,90,0.92)");
+      } else {
+        document.documentElement.style.setProperty("--accent", "#7aa2ff");
+        document.documentElement.style.setProperty("--accent2", "#4f73d6");
+        document.documentElement.style.setProperty("--accentText", "rgba(122,162,255,0.92)");
+      }
+    } else {
+      // light: petrol/indigo/graphite
+      if(preset==="indigo"){
+        document.documentElement.style.setProperty("--accent", "#3a3f86");
+        document.documentElement.style.setProperty("--accent2", "#2f336b");
+        document.documentElement.style.setProperty("--accentText", "rgba(58,63,134,0.92)");
+      } else if(preset==="graphite"){
+        document.documentElement.style.setProperty("--accent", "#374151");
+        document.documentElement.style.setProperty("--accent2", "#1f2937");
+        document.documentElement.style.setProperty("--accentText", "rgba(55,65,81,0.92)");
+      } else {
+        // petrol default
+        document.documentElement.style.setProperty("--accent", "#2c4a7a");
+        document.documentElement.style.setProperty("--accent2", "#243c63");
+        document.documentElement.style.setProperty("--accentText", "rgba(44,74,122,0.92)");
+      }
+    }
+
+    // Cockpit column visibility
+    const cockpit = (density==="cockpit");
+    const focusRight = document.querySelector(".focusRight");
+    if(focusRight){
+      focusRight.style.display = cockpit ? "flex" : "none";
+    }
+  }
+
+  // =========================
+  // Parsing (tolerant)
+  // =========================
+  function cleanLine(s){
+    let x = String(s||"").trim();
+    x = x.replace(/[|¦]+/g," ").replace(/\s{2,}/g," ").trim();
+    return x;
+  }
+
+  function isCategoryLine(line){
+    const s = String(line||"").trim();
+    if(!s) return false;
+    if(/:\s*$/.test(s)) return true;
+    if(/^[A-ZÀ-ÖØ-Ý0-9\s/]+$/.test(s) && s.length <= 40) return true;
+    return false;
+  }
+
+  function parseEthorion(text){
+    const t = text.toLowerCase();
+    const m = t.match(/(\d{1,3})\s*(?:ethorion|ethorions|eth)\b/);
+    if(m) return clamp(parseInt(m[1],10)||1, 1, 200);
+    const m2 = t.match(/(\d{1,3})\s*(?:torion|torions)\b/);
+    if(m2) return clamp(parseInt(m2[1],10)||1, 1, 200);
+    return null;
+  }
+
+  function parseMinutes(text){
+    const t = text.toLowerCase();
+    const m = t.match(/(\d{1,3})\s*(?:minutes|minute|min)\b/);
+    if(m) return clamp(parseInt(m[1],10)||0, 1, 999);
+    return null;
+  }
+
+  function parseImportance(text){
+    const t = text.toLowerCase();
+    const m = t.match(/\b(?:importance|prio|priorité)\s*(\d)\b/);
+    if(m) return clamp(parseInt(m[1],10)||2, 1, 3);
+    return null;
+  }
+
+  function removeMetaFromTitle(raw){
+    let x = raw.replace(/\s*[—–]\s*/g, " — ");
+    x = x.replace(/\b\d+\s*(ethorion|ethorions|eth|torion|torions)\b/gi, "");
+    x = x.replace(/\b\d+\s*(minutes|minute|min)\b/gi, "");
+    x = x.replace(/\b(importance|prio|priorité)\s*\d\b/gi, "");
+    x = x.replace(/\b(fait|done)\b/gi, "");
+    x = x.replace(/\s{2,}/g," ").trim();
+    const parts = x.split("—").map(s=>s.trim()).filter(Boolean);
+    return (parts[0] || x).trim();
+  }
+
+  function inferEnergyFromText(title, category){
+    const t = (title+" "+(category||"")).toLowerCase();
+    if(/\b(appeler|tél|tel|téléphone|mail|email|répondre|encoder|encodage|note)\b/.test(t)) return 1;
+    if(/\b(rapport|rédaction|dossier|analyse|attestation|procédure)\b/.test(t)) return 3;
+    return 2;
+  }
+
+  function defaultEthFromEnergyHint(line, cat){
+    const t = (line+" "+(cat||"")).toLowerCase();
+    if(/\b(appeler|tél|tel|téléphone|répondre|mail|email)\b/.test(t)) return 2;
+    if(/\b(rapport|dossier|attestation)\b/.test(t)) return 10;
+    return 3;
+  }
+
+  function parsePasted(raw){
+    const lines = String(raw||"").split(/\r?\n/).map(cleanLine).filter(Boolean);
+    let currentCategory = "Sans catégorie";
+    const out = [];
+
+    for(const line0 of lines){
+      const line = line0.trim();
+      if(!line) continue;
+
+      if(isCategoryLine(line)){
+        currentCategory = line.replace(/:+$/,"").trim() || currentCategory;
+        continue;
+      }
+
+      const eth = parseEthorion(line) ?? defaultEthFromEnergyHint(line, currentCategory);
+      const minutes = parseMinutes(line);
+      const prio = parseImportance(line) ?? 2;
+      const title = cleanLine(removeMetaFromTitle(line));
+      if(!title) continue;
+
+      out.push({
+        title,
+        category: currentCategory,
+        ethorionTotal: eth,
+        ethorionRemaining: eth,
+        minutesHint: minutes || null,
+        priority: prio,
+        energyTag: inferEnergyFromText(title, currentCategory)
+      });
+    }
+    return out;
+  }
+
+  // =========================
+  // Day baseline
+  // =========================
+  function ensureDay(){
+    const today = isoDay();
+    if(state.day.id !== today){
+      state.day.id = today;
+      state.day.startTasks = 0;
+      state.day.startEth = 0;
+      state.kiffanceMeta.sinceLastBreakEth = 0;
+      state.kiffanceMeta.consecutive = 0;
+      state.kiffanceMeta.nextBudgetEth = randomBudgetEth();
+      state.kiffanceMeta.lastBreakAt = null;
+    }
+    if(state.day.startTasks===0 && state.day.startEth===0){
+      setDayBaseline("Départ fixé");
+    }
+  }
+
+  function setDayBaseline(label){
+    const active = state.tasks.filter(t=>!t.done);
+    state.day.startTasks = active.length;
+    state.day.startEth = active.reduce((a,t)=>a + (t.ethorionRemaining||0), 0);
+    logEvent(label || "Départ fixé");
+    save();
+  }
+
+  // =========================
+  // Reset (clears current elimination data)
+  // =========================
+  function resetAll(){
+    if(!confirm("Reset : effacer la liste en cours + stats du jour ?\n(Paramètres / profils / sets conservés)")) return;
+    pushHistory("Reset");
+    // keep: settings, profiles, banks, kiffanceLibrary, sets
+    const keep = {
+      settings: state.settings,
+      profiles: state.profiles,
+      banks: state.banks,
+      kiffanceLibrary: state.kiffanceLibrary,
+      sets: state.sets
+    };
+    state = initial();
+    state.settings = keep.settings;
+    state.profiles = keep.profiles;
+    state.banks = keep.banks;
+    state.kiffanceLibrary = keep.kiffanceLibrary;
+    state.sets = keep.sets;
+
+    applySettingsToUI();
+    save();
+    renderAll();
+    showToast("Reset effectué.", 1800);
+    floatSay("Tout à zéro. Sans culpabilité. Juste un nouveau terrain.");
+  }
+
+  // =========================
+  // Tasks
+  // =========================
+  function nextOrder(){
+    const act = state.tasks.filter(t=>!t.done);
+    if(!act.length) return 1;
+    return Math.max(...act.map(t=>t.order||0)) + 1;
+  }
+
+  function addTasksFromText(raw){
+    const parsed = parsePasted(raw);
+    if(!parsed.length){
+      showToast("Rien à ajouter.", 1800);
+      floatSay("Aucun ennemi détecté. Recolle la matière.");
+      return;
+    }
+    pushHistory(`Ajout ${parsed.length} tâche(s)`);
+
+    const start = nextOrder();
+    parsed.forEach((p,i)=>{
+      state.tasks.push({
+        id: uid(),
+        title: p.title,
+        category: p.category,
+        ethorionTotal: p.ethorionTotal,
+        ethorionRemaining: p.ethorionRemaining,
+        minutesHint: p.minutesHint,
+        priority: p.priority,
+        energyTag: p.energyTag,
+        notes: "",
+        done: false,
+        order: start+i,
+        createdAt: now(),
+        doneAt: null,
+        pinned: false,
+        workedMs: 0,
+        lastFocusAt: null
+      });
+    });
+
+    ensureDay();
+
+    if(!state.focusId){
+      const t = pickNext(true);
+      state.focusId = t ? t.id : null;
+    }
+
+    // If idle: push into pending estimate to enforce time training
+    if(state.focusId && state.focusSession.state==="idle"){
+      enterPendingEstimate(state.focusId, "Ajout");
+    }
+
+    save();
+    renderAll();
+    showToast("Ajouté.", 1400);
+    floatSay("Cibles chargées. Temps visible. Doucement.");
+  }
+
+  function getTask(id){ return state.tasks.find(t=>t.id===id) || null; }
+
+  function countActiveTasks(){ return state.tasks.filter(t=>!t.done).length; }
+  function countDoneTasks(){ return state.tasks.filter(t=>t.done).length; }
+
+  function sumActiveEth(){
+    return state.tasks.reduce((a,t)=>a + (t.done?0:(t.ethorionRemaining||0)), 0);
+  }
+
+  // =========================
+  // Time calibration (neutral learning)
+  // =========================
+  function updateCatStats(entry){
+    const cat = entry.category || "Sans catégorie";
+    const stats = state.timeCalibration.catStats[cat] || { n:0, avgDeltaEth:0, avgRatio:1.0 };
+    const n1 = stats.n + 1;
+
+    // deltaEth = realEth - estEth (positive = underestimation)
+    stats.avgDeltaEth = (stats.avgDeltaEth*stats.n + entry.deltaEth) / n1;
+
+    const ratio = (entry.estEth>0) ? (entry.realEth / entry.estEth) : 1.0;
+    stats.avgRatio = (stats.avgRatio*stats.n + ratio) / n1;
+
+    stats.n = n1;
+    state.timeCalibration.catStats[cat] = stats;
+  }
+
+  function proposeEstimateEth(task){
+    // baseline: remaining ETH (or total if no remaining)
+    const baseEth = Math.max(1, Math.ceil(task.ethorionRemaining || task.ethorionTotal || 1));
+    const cat = task.category || "Sans catégorie";
+    const stats = state.timeCalibration.catStats[cat];
+
+    if(!stats || !stats.n) return baseEth;
+
+    // Use avgDeltaEth gently (never punitive; bounded)
+    // If user tends to underestimate (avgDeltaEth positive), propose slightly higher.
+    // Clamp to a soft range to avoid absurd jumps.
+    const bias = clamp(Math.round(stats.avgDeltaEth), -5, 10);
+    const proposed = clamp(baseEth + bias, 1, 200);
+
+    return proposed;
+  }
+
+  // =========================
+  // Focus session workflow: pending estimate -> focusing
+  // =========================
+  function isFocusing(){ return state.focusSession.state === "focusing"; }
+  function isPending(){ return state.focusSession.state === "pending_estimate"; }
+  function isKiff(){ return state.focusSession.state === "kiffance"; }
+
+  function stopActiveTimerIfAny(){
+    // Accumulate worked time for current focus session
+    if(state.focusSession.state === "focusing" && state.focusSession.taskId){
+      const t = getTask(state.focusSession.taskId);
+      if(t && state.focusSession.startedAt){
+        const add = now() - state.focusSession.startedAt;
+        t.workedMs = (t.workedMs||0) + Math.max(0, add);
+        state.focusSession.workedMs = (state.focusSession.workedMs||0) + Math.max(0, add);
+        t.lastFocusAt = now();
+      }
+    }
+    state.focusSession.startedAt = null;
+    state.focusSession.lastTickAt = null;
+  }
+
+  function enterPendingEstimate(taskId, reason=""){
+    stopActiveTimerIfAny();
+
+    const t = getTask(taskId);
+    if(!t || t.done) {
+      state.focusSession = {...state.focusSession, state:"idle", taskId:null, estEth:null, estMs:null, workedMs:0};
+      return;
+    }
+
+    const proposedEth = proposeEstimateEth(t);
+    const estEth = proposedEth;
+
+    state.focusId = taskId;
+    state.focusSession.state = "pending_estimate";
+    state.focusSession.taskId = taskId;
+    state.focusSession.estEth = estEth;
+    state.focusSession.estMs = ethToMs(estEth);
+    state.focusSession.workedMs = 0;
+    state.focusSession.lockUntil = 0;
+
+    save();
+    renderAll();
+
+    // Neutral cue
+    if(reason) logEvent(`Estimation: ${t.title.slice(0,32)}…`);
+    floatSay("Estime d'abord. Puis on démarre.", 2600);
+  }
+
+  function adjustEstimate(deltaEth){
+    if(!isPending()) return;
+    const n = clamp((state.focusSession.estEth||1) + deltaEth, 1, 200);
+    state.focusSession.estEth = n;
+    state.focusSession.estMs = ethToMs(n);
+    save();
+    renderAll();
+  }
+
+  function startFocusFromEstimate(){
+    if(!isPending()) return;
+    const t = getTask(state.focusSession.taskId);
+    if(!t) return;
+
+    // Start timer
+    state.focusSession.state = "focusing";
+    state.focusSession.startedAt = now();
+    state.focusSession.lastTickAt = now();
+    state.focusSession.workedMs = 0;
+
+    // Focus lock (prevents immediate reroll)
+    const lockSec = clamp(Number(state.settings?.roulette?.focusLockSec||20), 0, 300);
+    state.focusSession.lockUntil = now() + lockSec*1000;
+
+    save();
+    renderAll();
+    showToast("Focus lancé.", 1200);
+    floatSay("Temps visible. Tu avances à ton rythme.", 2600);
+  }
+
+  // =========================
+  // Finish task -> calibration feedback
+  // =========================
+  function finishTask(taskId, opts={}){
+    const t = getTask(taskId);
+    if(!t) return;
+
+    // Stop timer and get real time for this focus session (if same task)
+    let realMs = t.workedMs||0;
+    let estEth = null;
+    let estMs = null;
+
+    // If finishing currently focused task, include current live segment
+    if(state.focusSession.taskId === t.id){
+      if(state.focusSession.state === "focusing" && state.focusSession.startedAt){
+        const add = now() - state.focusSession.startedAt;
+        t.workedMs = (t.workedMs||0) + Math.max(0, add);
+        realMs = t.workedMs||0;
+      }
+      estEth = state.focusSession.estEth || proposeEstimateEth(t) || Math.max(1, t.ethorionTotal||1);
+      estMs = state.focusSession.estMs || ethToMs(estEth);
+    } else {
+      // If not in focus session, use task's own ETH as estimation baseline (still store)
+      estEth = Math.max(1, Math.ceil(t.ethorionTotal||t.ethorionRemaining||1));
+      estMs = ethToMs(estEth);
+    }
+
+    const realEth = msToEth(realMs);
+    const deltaEth = realEth - estEth;
+
+    if(!opts.silent) pushHistory("Terminer tâche");
+
+    t.done = true;
+    t.doneAt = now();
+    t.ethorionRemaining = 0;
+
+    // Update kiffance budget with realEth
+    state.kiffanceMeta.sinceLastBreakEth += realEth;
+    if(state.kiffanceMeta.sinceLastBreakEth < 0) state.kiffanceMeta.sinceLastBreakEth = 0;
+
+    // Store calibration entry
+    const entry = {
+      ts: now(),
+      title: t.title,
+      category: t.category || "Sans catégorie",
+      estEth, estMs,
+      realMs,
+      realEth,
+      deltaEth
+    };
+    state.timeCalibration.entries.push(entry);
+    state.timeCalibration.entries = state.timeCalibration.entries.slice(-500);
+    updateCatStats(entry);
+
+    // Clean focus session
+    stopActiveTimerIfAny();
+    state.focusSession.state = "idle";
+    state.focusSession.taskId = null;
+    state.focusSession.estEth = null;
+    state.focusSession.estMs = null;
+    state.focusSession.workedMs = 0;
+    state.focusSession.lockUntil = 0;
+
+    // Feedback (neutral, immediate)
+    if(state.settings?.sound?.enabled && state.settings?.sound?.boom){
+      playBoom();
+    }
+    confetti(1.1);
+    flashSoft();
+
+    showCalibrationModal(entry);
+
+    // Next target
+    const next = pickNext(true, {warmStart:false});
+    state.focusId = next ? next.id : null;
+
+    // If there is a next task, enforce estimation gate again
+    if(state.focusId){
+      enterPendingEstimate(state.focusId, "Suivant");
+    }
+
+    save();
+    renderAll();
+
+    // If no tasks left
+    if(!state.focusId && countActiveTasks()===0){
+      setTimeout(()=>{
+        confetti(2.2);
+        showToast("MISSION TOTALE TERMINÉE.", 4200);
+        floatSay(pick(state.banks.finishAll), 5200);
+      }, 200);
+    } else {
+      // Check kiffance trigger (after a completion)
+      maybeTriggerKiffance(entry);
+    }
+  }
+
+  // =========================
+  // Kiffance engine (bounded regulator)
+  // =========================
+  function randomBudgetEth(){
+    const k = state.settings?.kiffance || {};
+    const a = clamp(Number(k.budgetMinEth||20), 10, 120);
+    const b = clamp(Number(k.budgetMaxEth||35), a, 180);
+    return a + Math.floor(Math.random()*(b-a+1));
+  }
+
+  function pickKiffanceItem(overrun=false){
+    const lib = state.kiffanceLibrary || defaultKiffanceLibrary();
+    const families = Object.keys(lib);
+    const fam = families[Math.floor(Math.random()*families.length)];
+    const pool = (lib[fam]||[]).slice();
+    if(!pool.length) return null;
+
+    // If overrun and shortOnOverrun: bias to shorter duration
+    if(overrun && state.settings?.kiffance?.shortOnOverrun){
+      pool.sort((a,b)=> (a.durationMin||5) - (b.durationMin||5));
+      return { fam, item: pool[0] };
+    }
+
+    const item = pool[Math.floor(Math.random()*pool.length)];
+    return { fam, item };
+  }
+
+  function kiffanceAllowed(){
+    const k = state.settings?.kiffance || {};
+    if(!k.enabled) return false;
+    if(state.focusSession.state === "kiffance") return false;
+    const maxCon = clamp(Number(k.maxConsecutive||2), 0, 5);
+    if(state.kiffanceMeta.consecutive >= maxCon) return false;
+    return true;
+  }
+
+  function maybeTriggerKiffance(lastEntry){
+    if(!kiffanceAllowed()) return;
+
+    // Trigger if budget reached
+    const budget = state.kiffanceMeta.nextBudgetEth || randomBudgetEth();
+    const reached = (state.kiffanceMeta.sinceLastBreakEth >= budget);
+
+    if(!reached) return;
+
+    // Determine overrun (real > est)
+    const overrun = lastEntry ? (lastEntry.realEth > lastEntry.estEth) : false;
+
+    startKiffance(overrun);
+  }
+
+  function startKiffance(overrun=false){
+    if(!kiffanceAllowed()) return;
+
+    state.focusSession.state = "kiffance";
+    state.focusSession.taskId = null;
+    state.focusSession.estEth = null;
+    state.focusSession.estMs = null;
+    state.focusSession.workedMs = 0;
+    state.focusSession.startedAt = null;
+    state.focusSession.lockUntil = 0;
+
+    const pickK = pickKiffanceItem(overrun);
+    if(!pickK) return;
+
+    const { fam, item } = pickK;
+
+    // Duration strict & auto-end (no manual close)
+    const durMin = clamp(Number(item.durationMin||5), 5, 20);
+    const durMs = durMin * 60 * 1000;
+
+    state.kiffanceMeta.consecutive += 1;
+    state.kiffanceMeta.lastBreakAt = now();
+    state.kiffanceMeta.sinceLastBreakEth = 0;
+    state.kiffanceMeta.nextBudgetEth = randomBudgetEth();
+
+    save();
+    renderAll();
+
+    // Show modal with countdown
+    showKiffanceModal(fam, item, durMs);
+    logEvent(`Kiffance: ${fam} (${durMin}m)`);
+
+    // UI hint
+    floatSay("Pause bornée. Puis retour au fil.", 2400);
+  }
+
+  function endKiffance(){
+    hideModal();
+
+    // Reset consecutive if we go back to focus (but keep if chain)
+    // We keep consecutive count; it limits successive breaks.
+    // After a normal task completion, consecutive will decay via new break budget logic.
+    // (Optional: decay after 10 min) — kept simple.
+
+    state.focusSession.state = "idle";
+    save();
+    renderAll();
+
+    showToast(pick(state.banks.kiffReturn), 2000);
+
+    // Continue flow: pick next task and enforce estimation gate
+    const next = pickNext(true, {warmStart:false});
+    state.focusId = next ? next.id : null;
+    if(state.focusId){
+      enterPendingEstimate(state.focusId, "Retour");
+    } else {
+      floatSay(pick(state.banks.finishAll), 3800);
+    }
+
+    save();
+    renderAll();
+  }
+
+  // =========================
+  // Picking logic (roulette/order + warm start + pinned)
+  // =========================
+  function getActivePool(){
+    const base = state.tasks.filter(t=>!t.done && (t.ethorionRemaining||0) > 0);
+    const sel = state.mode?.includeCats || [];
+    if(!sel.length) return base;
+    const set = new Set(sel);
+    return base.filter(t => set.has(t.category || "Sans catégorie"));
+  }
+
+  function pickOrderedTask(opts={}){
+    const pool = getActivePool();
+    if(!pool.length) return null;
+
+    const by = state.mode?.orderBy || "prio";
+    const arr = pool.slice();
+
+    if(by === "alpha"){
+      arr.sort((a,b)=> (a.title||"").localeCompare(b.title||"", "fr"));
+    } else if(by === "chrono"){
+      arr.sort((a,b)=> (a.createdAt||0) - (b.createdAt||0));
+    } else if(by === "cat"){
+      arr.sort((a,b)=> (a.category||"").localeCompare(b.category||"", "fr") || (a.title||"").localeCompare(b.title||"", "fr"));
+    } else if(by === "eth"){
+      arr.sort((a,b)=> (b.ethorionRemaining||0) - (a.ethorionRemaining||0));
+    } else {
+      arr.sort((a,b)=> (b.priority||2)-(a.priority||2) || (a.order||0)-(b.order||0));
+    }
+
+    // Warm start: first pick of the day favors short tasks if available
+    if(opts.warmStart){
+      const short = arr.filter(t => (t.ethorionRemaining||0) <= 2);
+      if(short.length) return short[0];
+    }
+
+    return arr[0];
+  }
+
+  function energyCaps(level){
+    if(level===1) return { softMax: 1, rareMax: 3, rareProb: 0.22, hardMaxProb: 0.03, hardMax: 999 };
+    if(level===2) return { softMax: 4, rareMax: 8, rareProb: 0.25, hardMaxProb: 0.08, hardMax: 16 };
+    return { softMax: 8, rareMax: 16, rareProb: 0.28, hardMaxProb: 0.18, hardMax: 999 };
+  }
+
+  function weightedPick(items, weights){
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total;
+    for(let i=0;i<items.length;i++){
+      r -= weights[i];
+      if(r<=0) return items[i];
+    }
+    return items[items.length-1];
+  }
+
+  function pickEnergyRoulette(allowSame=false, opts={}){
+    const pool0 = getActivePool();
+    if(!pool0.length) return null;
+
+    // Warm start: force first pick short if possible
+    if(opts.warmStart){
+      const short = pool0.filter(t => (t.ethorionRemaining||0) <= 2);
+      if(short.length){
+        short.sort((a,b)=>(b.priority||2)-(a.priority||2) || (a.order||0)-(b.order||0));
+        return short[0];
+      }
+    }
+
+    const E = clamp(state.energyProfile.level||2, 1, 3);
+    const M = clamp(state.energyProfile.motivation||2, 1, 3);
+    const caps = energyCaps(E);
+
+    const pool = pool0.filter(t=>{
+      const rem = Math.max(1, Math.ceil(t.ethorionRemaining||1));
+      if(rem <= caps.softMax) return true;
+      if(rem <= caps.rareMax) return Math.random() < caps.rareProb;
+      if(rem <= caps.hardMax) return Math.random() < caps.hardMaxProb;
+      return false;
+    });
+
+    const finalPool = pool.length ? pool : pool0;
+
+    const pinWeight = clamp(Number(state.settings?.roulette?.pinWeight||2.4), 1.0, 6.0);
+
+    const weights = finalPool.map(t=>{
+      const rem = Math.max(1, Math.ceil(t.ethorionRemaining||1));
+      const pr = (t.priority===3? 3 : t.priority===2? 2 : 1);
+
+      let fit = 1.0;
+      if(E===1) fit *= (t.energyTag===1 ? 1.60 : t.energyTag===2 ? 0.95 : 0.55);
+      else if(E===2) fit *= (t.energyTag===1 ? 1.12 : t.energyTag===2 ? 1.25 : 0.98);
+      else fit *= (t.energyTag===3 ? 1.30 : 1.06);
+
+      let mot = 1.0;
+      if(M===1) mot *= (rem<=2 ? 1.55 : rem<=4 ? 1.10 : 0.70);
+      else if(M===2) mot *= (rem<=3 ? 1.18 : 1.0);
+
+      const total = Math.max(1, t.ethorionTotal||1);
+      const doneFrac = (total - (t.ethorionRemaining||0)) / total;
+      const progressBoost = 1.0 + (doneFrac * 0.25);
+
+      const longPenalty = (E===1 && rem>3) ? 0.65 : (E===2 && rem>8) ? 0.80 : 1.0;
+
+      const pinnedBoost = t.pinned ? pinWeight : 1.0;
+
+      return Math.max(0.2, rem * pr * fit * mot * progressBoost * longPenalty * pinnedBoost);
+    });
+
+    let candidate = weightedPick(finalPool, weights);
+    if(!allowSame && state.focusId && candidate && candidate.id === state.focusId && finalPool.length > 1){
+      candidate = weightedPick(finalPool, weights);
+    }
+    return candidate;
+  }
+
+  function pickNext(allowSame=false, opts={warmStart:false}){
+    const warmStart = !!opts.warmStart;
+    if(state.mode?.pick === "order"){
+      return pickOrderedTask({warmStart});
+    }
+    return pickEnergyRoulette(allowSame, {warmStart});
+  }
+
+  // Roulette suspense + focus lock
+  let rouletteLock = false;
+  function roulette(){
+    if(rouletteLock) return;
+
+    // Focus lock: prevent reroll during lock window
+    if(isFocusing() && now() < (state.focusSession.lockUntil||0)){
+      showToast("Focus lock actif.", 1400);
+      floatSay("Reroll bloqué un instant. Continue ou termine.", 2200);
+      return;
+    }
+
+    rouletteLock = true;
+    btnRoulette.disabled = true;
+    btnRoulette.classList.add("spinning");
+
+    const suspense = 520 + Math.floor(Math.random()*260);
+
+    setTimeout(()=>{
+      const warmStart = !!state.settings?.roulette?.warmStart && (state.day.startTasks>0 && countDoneTasks()===0);
+      const t = pickNext(true, {warmStart});
+      if(t){
+        state.focusId = t.id;
+        enterPendingEstimate(t.id, "Roulette");
+        showToast("CIBLE VERROUILLÉE.", 1600);
+      }else{
+        state.focusId = null;
+        state.focusSession.state = "idle";
+        showToast("PLUS DE CIBLES.", 1600);
+        floatSay(pick(state.banks.finishAll), 2600);
+      }
+
+      btnRoulette.disabled = false;
+      btnRoulette.classList.remove("spinning");
+      rouletteLock = false;
+
+      save();
+      renderAll();
+    }, suspense);
+  }
+
+  // =========================
+  // Dégommer (eth based) + continuous time bar
+  // =========================
+  function degoOne(){
+    const t = getTask(state.focusId);
+    if(!t){
+      showToast("CIBLE EN COURS DE RECHERCHE", 1600);
+      floatSay("Radar en balayage…");
+      return;
+    }
+
+    // Must be in focusing state: estimation active before action
+    if(!isFocusing() || state.focusSession.taskId !== t.id){
+      // If pending, refuse gently
+      if(isPending()){
+        showToast("Valide l'estimation d'abord.", 1600);
+        floatSay("Sans estimation active, pas d'entraînement du temps.", 2600);
+      } else {
+        enterPendingEstimate(t.id, "Focus");
+      }
+      return;
+    }
+
+    pushHistory("Dégommage");
+    t.ethorionRemaining = Math.max(0, (t.ethorionRemaining||0) - 1);
+
+    if(Math.random() < 0.30) confetti(0.8);
+    flashSoft();
+    floatSay(pick(state.banks.lines), 2200);
+
+    if(t.ethorionRemaining===0){
+      finishTask(t.id, {silent:true});
+      return;
+    }
+
+    save();
+    renderAll();
+  }
+
+  function skip(){
+    // stop timer if focusing
+    stopActiveTimerIfAny();
+
+    const next = pickNext(true, {warmStart:false});
+    state.focusId = next ? next.id : null;
+
+    if(state.focusId){
+      enterPendingEstimate(state.focusId, "Passer");
+      showToast("CIBLE REPLACÉE.", 1600);
+      floatSay("Changement de cible. Estime → focus.", 2400);
+    } else {
+      showToast("PLUS DE CIBLES.", 1600);
+      floatSay(pick(state.banks.finishAll), 2400);
+      state.focusSession.state = "idle";
+    }
+
+    save();
+    renderAll();
+  }
+
+  function deleteTask(taskId){
+    if(!confirm("Supprimer ?")) return;
+    pushHistory("Supprimer tâche");
+    if(state.focusId === taskId) state.focusId = null;
+    state.tasks = state.tasks.filter(x=>x.id!==taskId);
+    save();
+    renderAll();
+  }
+
+  function duplicateTask(taskId){
+    const t = getTask(taskId);
+    if(!t) return;
+    pushHistory("Dupliquer tâche");
+    const c = structuredClone(t);
+    c.id = uid();
+    c.done = false;
+    c.doneAt = null;
+    c.ethorionRemaining = c.ethorionTotal;
+    c.order = nextOrder();
+    c.createdAt = now();
+    c.workedMs = 0;
+    c.lastFocusAt = null;
+    state.tasks.push(c);
+    save();
+    renderAll();
+    showToast("Dupliqué.", 1400);
+  }
+
+  function togglePinned(taskId){
+    const t = getTask(taskId);
+    if(!t || t.done) return;
+    pushHistory("Épingler");
+    t.pinned = !t.pinned;
+    save();
+    renderAll();
+    showToast(t.pinned ? "Épinglée." : "Désépinglée.", 1200);
+  }
+
+  function setEthorion(taskId){
+    const t = getTask(taskId);
+    if(!t || t.done) return;
+
+    // Keep the old prompt for power-users, but not used in estimation gate
+    const val = prompt("ETHORION total ?", String(t.ethorionTotal||3));
+    if(val===null) return;
+
+    pushHistory("Régler ethorion");
+    const n = clamp(parseInt(val,10)||t.ethorionTotal||3, 1, 200);
+
+    const wasTotal = Math.max(1, t.ethorionTotal||1);
+    const wasRem = clamp(t.ethorionRemaining||0, 0, wasTotal);
+    const ratio = wasTotal ? (wasRem/wasTotal) : 1;
+
+    t.ethorionTotal = n;
+    t.ethorionRemaining = clamp(Math.round(n*ratio), 0, n);
+    if(t.ethorionRemaining===0) t.ethorionRemaining = Math.min(1,n);
+
+    save();
+    renderAll();
+    showToast("OK", 1200);
+  }
+
+  // =========================
+  // Render: counters + focus + drawer + time HUD
+  // =========================
+  function energyLabel(v){
+    return (v===1 ? "basse" : v===2 ? "moyenne" : "haute");
+  }
+
+  function renderCounters(){
+    ensureDay();
+
+    const leftTasks = countActiveTasks();
+    const leftEth = sumActiveEth();
+    const doneTasks = countDoneTasks();
+
+    const startT = state.day.startTasks || leftTasks;
+    const startE = state.day.startEth || leftEth;
+
+    const elimEth = Math.max(0, startE - leftEth);
+
+    startTasksEl.textContent  = String(startT);
+    startTasks2El.textContent = String(startT);
+    leftTasksEl.textContent   = String(leftTasks);
+    startEthEl.textContent    = String(startE);
+    leftEthEl.textContent     = String(leftEth);
+    elimEthEl.textContent     = String(elimEth);
+    doneTasksEl.textContent   = String(doneTasks);
+
+    const denom = Math.max(1, startE);
+    const pctLeft = clamp(Math.round((leftEth/denom)*100), 0, 100);
+    gFill.style.width = `${pctLeft}%`;
+    gLabel.textContent = `${pctLeft}%`;
+
+    updateUndoRedo();
+
+    // cockpit budget info
+    const budget = state.kiffanceMeta.nextBudgetEth || 0;
+    const since = state.kiffanceMeta.sinceLastBreakEth || 0;
+    kiffBudgetInfo.textContent = `Budget kiffance: ${since}/${budget} ETH · consécutives: ${state.kiffanceMeta.consecutive}/${state.settings?.kiffance?.maxConsecutive||2}`;
+  }
+
+  function renderTimeHud(){
+    const t = getTask(state.focusId);
+    const fs = state.focusSession;
+
+    if(isKiff()){
+      hudStateV.textContent = "kiffance";
+      hudEstV.textContent = "—";
+      hudElapsedV.textContent = "—";
+      hudCatV.textContent = "—";
+      return;
+    }
+
+    if(!t){
+      hudStateV.textContent = "—";
+      hudEstV.textContent = "—";
+      hudElapsedV.textContent = "—";
+      hudCatV.textContent = "—";
+      return;
+    }
+
+    hudCatV.textContent = (t.category||"Sans catégorie");
+
+    if(isPending() && fs.taskId === t.id){
+      hudStateV.textContent = "estimation";
+      hudEstV.textContent = `${fs.estEth} ETH · ${hhmmHuman(fs.estMs)}`;
+      hudElapsedV.textContent = "—";
+      return;
+    }
+
+    if(isFocusing() && fs.taskId === t.id){
+      hudStateV.textContent = "focus";
+      hudEstV.textContent = `${fs.estEth} ETH · ${hhmmHuman(fs.estMs)}`;
+
+      // elapsed = workedMs + live segment
+      const live = fs.startedAt ? (now() - fs.startedAt) : 0;
+      const elapsed = (fs.workedMs||0) + Math.max(0, live);
+      hudElapsedV.textContent = mmss(elapsed);
+      return;
+    }
+
+    // Idle with a selected task: force estimation gate
+    hudStateV.textContent = "prêt";
+    hudEstV.textContent = "—";
+    hudElapsedV.textContent = "—";
+  }
+
+  function renderFocus(){
+    const t = getTask(state.focusId);
+    const fs = state.focusSession;
+
+    focusMode.textContent = (state.mode?.pick === "order") ? "ordre" : "roulette";
+    focusEnergy.textContent = energyLabel(state.energyProfile.level);
+
+    renderTimeHud();
+
+    if(!t){
+      focusTitle.textContent = "CIBLE EN COURS DE RECHERCHE";
+      focusMeta.textContent = "—";
+      focusEth.textContent = "0";
+      focusPrio.textContent = "—";
+      focusPinned.textContent = "—";
+
+      // Time bar: neutral full
+      tFill.style.width = "100%";
+      tLabel.textContent = "—";
+
+      estGate.style.display = "none";
+
+      btnDego.disabled = true;
+      btnNotes.disabled = true;
+      btnDone.disabled = true;
+      btnSkip.disabled = false;
+      return;
+    }
+
+    focusTitle.textContent = t.title;
+
+    const hintMin = t.minutesHint ? ` · ${t.minutesHint} min` : "";
+    const cat = t.category || "Sans catégorie";
+    focusMeta.textContent = `${cat} · P${t.priority}${hintMin}`;
+    focusEth.textContent = `${t.ethorionRemaining}/${t.ethorionTotal}`;
+    focusPrio.textContent = String(t.priority);
+    focusPinned.textContent = t.pinned ? "oui" : "non";
+
+    // Est gate visibility
+    if(isPending() && fs.taskId === t.id){
+      estGate.style.display = "flex";
+    } else {
+      estGate.style.display = "none";
+    }
+
+    // Time-progress bar logic:
+    // - while focusing: bar drains linearly based on estimate
+    // - if elapsed exceeds estimate: bar stays at 0 and label shows overrun message
+    let label = "—";
+    let pctLeft = 100;
+
+    if(isPending() && fs.taskId === t.id){
+      pctLeft = 100;
+      label = `estimé · ${fs.estEth} ETH`;
+    } else if(isFocusing() && fs.taskId === t.id){
+      const live = fs.startedAt ? (now() - fs.startedAt) : 0;
+      const elapsed = (fs.workedMs||0) + Math.max(0, live);
+      const est = Math.max(ETH_MS, fs.estMs||ETH_MS);
+
+      const frac = clamp(1 - (elapsed/est), -0.50, 1); // allow mild "overflow"
+      pctLeft = clamp(Math.round(frac*100), 0, 100);
+      tFill.style.width = `${pctLeft}%`;
+
+      // Visual repères discrets (70/30) via label only (no alarms)
+      if(elapsed < est){
+        if(pctLeft <= 30) label = "repère · ~30% restant";
+        else if(pctLeft <= 70) label = "repère · ~70% restant";
+        else label = "temps estimé";
+      } else {
+        label = pick(state.banks.overrunNeutral);
+        // keep bar at 0, never red/punitive
+        tFill.style.width = "0%";
+      }
+    } else {
+      // not focusing: show neutral
+      pctLeft = 100;
+      label = "—";
+      tFill.style.width = "100%";
+    }
+
+    tLabel.textContent = label;
+
+    // Buttons availability
+    btnDego.disabled = false;
+    btnNotes.disabled = false;
+    btnDone.disabled = false;
+    btnSkip.disabled = false;
+  }
+
+  function renderAll(){
+    applySettingsToUI();
+    renderCounters();
+    renderFocus();
+    renderDrawer();
+  }
+
+  // =========================
+  // Drawer Tabs + Views
+  // =========================
+  const TAB_DEFS = [
+    { key:"inbox",   label:"Inbox" },
+    { key:"liste",   label:"Liste" },
+    { key:"cats",    label:"Cat" },
+    { key:"sets",    label:"Sets" },
+    { key:"mode",    label:"Mode" },
+    { key:"energie", label:"Énergie" },
+    { key:"params",  label:"Param" },
+    { key:"profiles",label:"Profils" },
+    { key:"banks",   label:"Textes" },
+    { key:"kiff",    label:"Kiffance" },
+    { key:"calib",   label:"Calib" },
+    { key:"hist",    label:"Hist" },
+    { key:"rapport", label:"Rapport" }
+  ];
+
+  function setTab(key){
+    state.ui.activeTab = key;
+    save();
+    renderDrawer();
+  }
+
+  function renderTabs(){
+    tabs.innerHTML = "";
+    TAB_DEFS.forEach(t=>{
+      const b = document.createElement("button");
+      b.className = "tab" + (state.ui.activeTab===t.key ? " active" : "");
+      b.textContent = t.label;
+      b.addEventListener("click", ()=> setTab(t.key));
+      tabs.appendChild(b);
+    });
+  }
+
+  function miniBarPct(rem, total){
+    total = Math.max(1, total||1);
+    rem = clamp(rem||0, 0, total);
+    return clamp(Math.round((rem/total)*100), 0, 100);
+  }
+
+  function renderTaskRow(t, {draggable=false}={}){
+    const row = document.createElement("div");
+    row.className = "trow";
+    row.dataset.id = t.id;
+
+    const pct = miniBarPct(t.ethorionRemaining, t.ethorionTotal);
+
+    row.innerHTML = `
+      <div class="trowTop">
+        <div style="min-width:0;">
+          <div class="tname ${t.done ? "done":""}">${esc(t.title)}</div>
+          <div class="tmini">
+            <span>${esc(t.category||"Sans catégorie")}</span>
+            <span>·</span>
+            <span>P${esc(String(t.priority))}</span>
+            <span>·</span>
+            <span>ETH ${esc(String(t.ethorionRemaining))}/${esc(String(t.ethorionTotal))}</span>
+            ${t.pinned ? `<span>·</span><span style="color:var(--accentText);font-weight:1000;">📌</span>` : ``}
+          </div>
+        </div>
+        <div class="tacts">
+          ${!t.done ? `<button class="btn topFx" data-a="focus">Focus</button>` : ""}
+          ${!t.done ? `<button class="btn topFx" data-a="pin">Pin</button>` : ""}
+          ${!t.done ? `<button class="btn topFx" data-a="eth">Eth</button>` : ""}
+          ${!t.done ? `<button class="btn topFx" data-a="dup">Dupl</button>` : ""}
+          ${!t.done ? `<button class="btn topFx" data-a="ok">OK</button>` : ""}
+          <button class="btn" data-a="x">X</button>
+        </div>
+      </div>
+      <div class="sbarMiniWrap" aria-label="Progression">
+        <div class="sbarMiniFill" style="width:${pct}%"></div>
+      </div>
+    `;
+
+    row.querySelectorAll("[data-a]").forEach(btn=>{
+      const a = btn.dataset.a;
+      btn.addEventListener("click", ()=>{
+        if(a==="focus"){
+          state.focusId = t.id;
+          enterPendingEstimate(t.id, "Focus");
+        }
+        if(a==="pin"){ togglePinned(t.id); }
+        if(a==="eth"){ setEthorion(t.id); }
+        if(a==="dup"){ duplicateTask(t.id); }
+        if(a==="ok"){ finishTask(t.id); }
+        if(a==="x"){ deleteTask(t.id); }
+      });
+    });
+
+    if(draggable && !t.done){
+      row.draggable = true;
+      row.style.cursor = "grab";
+    }
+    return row;
+  }
+
+  function renderDrawerInbox(){
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="cardTitle"><span>Inbox</span><span>Ctrl/⌘+Enter</span></div>
+      <textarea id="inboxTA" placeholder="Colle une liste.
+Lignes finissant par : = catégories.
+Tout le reste = tâches."></textarea>
+      <div class="rowBtns">
+        <button class="btn topFx" id="btnAdd">Ajouter</button>
+        <button class="btn topFx" id="btnBaseline">Fixer départ</button>
+      </div>
+    `;
+    const ta = card.querySelector("#inboxTA");
+    const add = card.querySelector("#btnAdd");
+    const baseline = card.querySelector("#btnBaseline");
+
+    add.addEventListener("click", ()=>{
+      addTasksFromText(ta.value);
+      ta.value = "";
+    });
+
+    baseline.addEventListener("click", ()=>{
+      pushHistory("Fixer départ");
+      setDayBaseline("Départ re-fixé");
+      renderAll();
+      showToast("Départ fixé.", 1500);
+      floatSay("Départ verrouillé. Exécution.");
+    });
+
+    ta.addEventListener("keydown", (e)=>{
+      if((e.ctrlKey||e.metaKey) && e.key==="Enter"){
+        e.preventDefault();
+        add.click();
+      }
+    });
+
+    return card;
+  }
+
+  function getActiveSorted(){
+    const items = state.tasks.filter(t=>!t.done);
+    const sort = state.ui.sort || "order";
+    if(sort==="prio"){
+      items.sort((a,b)=>(b.priority||2)-(a.priority||2) || (a.order||0)-(b.order||0));
+    }else if(sort==="eth"){
+      items.sort((a,b)=>(b.ethorionRemaining||0)-(a.ethorionRemaining||0) || (b.priority||2)-(a.priority||2));
+    }else if(sort==="cat"){
+      items.sort((a,b)=> (a.category||"").localeCompare(b.category||"", "fr") || (a.order||0)-(b.order||0));
+    }else{
+      items.sort((a,b)=>(a.order||0)-(b.order||0));
+    }
+    return items;
+  }
+
+  function applyOrderFromList(ids){
+    let k = 1;
+    ids.forEach(id=>{
+      const t = getTask(id);
+      if(t && !t.done) t.order = k++;
+    });
+  }
+
+  function renderDrawerList(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `
+      <div class="cardTitle">
+        <span>Liste</span>
+        <span>
+          <select id="sortSel" aria-label="Tri">
+            <option value="order">Tri: ordre</option>
+            <option value="prio">Tri: priorité</option>
+            <option value="eth">Tri: ethorion</option>
+            <option value="cat">Tri: catégorie</option>
+          </select>
+        </span>
+      </div>
+      <div class="list" id="taskList"></div>
+      <details>
+        <summary>Terminé</summary>
+        <div class="inside">
+          <div class="list" id="doneList"></div>
+        </div>
+      </details>
+    `;
+
+    const sortSel = wrap.querySelector("#sortSel");
+    sortSel.value = state.ui.sort || "order";
+    sortSel.addEventListener("change", ()=>{
+      pushHistory("Tri");
+      state.ui.sort = sortSel.value;
+      save();
+      renderDrawer();
+    });
+
+    const list = wrap.querySelector("#taskList");
+    const items = getActiveSorted();
+    const draggable = (state.ui.sort==="order");
+    items.forEach(t=> list.appendChild(renderTaskRow(t, {draggable})));
+
+    if(draggable){
+      let dragId = null;
+
+      list.addEventListener("dragstart", (e)=>{
+        const row = e.target.closest(".trow");
+        if(!row) return;
+        dragId = row.dataset.id;
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", dragId);
+      });
+
+      list.addEventListener("dragover", (e)=>{
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      });
+
+      list.addEventListener("drop", (e)=>{
+        e.preventDefault();
+        const targetRow = e.target.closest(".trow");
+        if(!targetRow) return;
+
+        const fromId = e.dataTransfer.getData("text/plain") || dragId;
+        const toId = targetRow.dataset.id;
+        if(!fromId || !toId || fromId===toId) return;
+
+        const rows = [...list.querySelectorAll(".trow")];
+        const fromEl = rows.find(r=>r.dataset.id===fromId);
+        const toEl = rows.find(r=>r.dataset.id===toId);
+        if(!fromEl || !toEl) return;
+
+        pushHistory("Réordonner");
+
+        const rect = toEl.getBoundingClientRect();
+        const after = (e.clientY - rect.top) > rect.height/2;
+        if(after) toEl.after(fromEl);
+        else toEl.before(fromEl);
+
+        const ids = [...list.querySelectorAll(".trow")].map(r=>r.dataset.id);
+        applyOrderFromList(ids);
+
+        save();
+        renderDrawer();
+        showToast("Ordre mis à jour.", 1400);
+      });
+    }
+
+    const doneList = wrap.querySelector("#doneList");
+    state.tasks
+      .filter(t=>t.done)
+      .sort((a,b)=>(b.doneAt||0)-(a.doneAt||0))
+      .slice(0, 80)
+      .forEach(t=> doneList.appendChild(renderTaskRow(t)));
+
+    return wrap;
+  }
+
+  function groupByCategory(tasks){
+    const m = new Map();
+    tasks.forEach(t=>{
+      const k = t.category || "Sans catégorie";
+      if(!m.has(k)) m.set(k, []);
+      m.get(k).push(t);
+    });
+    const keys = [...m.keys()].sort((a,b)=>a.localeCompare(b, "fr"));
+    return {m, keys};
+  }
+
+  function renderDrawerCats(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `<div class="cardTitle"><span>Catégories</span><span>pool actuel</span></div>`;
+
+    const items = getActiveSorted();
+    const {m, keys} = groupByCategory(items);
+
+    keys.forEach(cat=>{
+      const det = document.createElement("details");
+      det.open = false;
+      const sumEth = m.get(cat).reduce((a,t)=>a+(t.ethorionRemaining||0),0);
+      const sum = document.createElement("summary");
+      sum.textContent = `${cat} — ETH ${sumEth}`;
+      det.appendChild(sum);
+
+      const inside = document.createElement("div");
+      inside.className = "inside";
+      const list = document.createElement("div");
+      list.className = "list";
+      m.get(cat).forEach(t=> list.appendChild(renderTaskRow(t)));
+      inside.appendChild(list);
+
+      // Category inclusion toggle for active pool
+      const row = document.createElement("div");
+      row.className = "rowBtns";
+      row.style.justifyContent = "flex-start";
+      const inc = document.createElement("button");
+      inc.className = "btn topFx";
+      const selected = (state.mode?.includeCats||[]).includes(cat);
+      inc.textContent = selected ? "Retirer du pool" : "Inclure dans le pool";
+      inc.addEventListener("click", ()=>{
+        pushHistory("Pool catégorie");
+        const arr = state.mode.includeCats || [];
+        const set = new Set(arr);
+        if(set.has(cat)) set.delete(cat);
+        else set.add(cat);
+        state.mode.includeCats = [...set];
+        save();
+        renderDrawer();
+        renderFocus();
+        showToast("Pool mis à jour.", 1400);
+      });
+      row.appendChild(inc);
+
+      inside.appendChild(row);
+      det.appendChild(inside);
+
+      wrap.appendChild(det);
+    });
+
+    // Quick actions
+    const actions = document.createElement("div");
+    actions.className = "rowBtns";
+    actions.innerHTML = `
+      <button class="btn topFx" id="catsAll">Tout inclure</button>
+      <button class="btn topFx" id="catsNone">Tout libérer</button>
+    `;
+    actions.querySelector("#catsAll").addEventListener("click", ()=>{
+      pushHistory("Cats all");
+      state.mode.includeCats = [...new Set(state.tasks.filter(t=>!t.done).map(t=>t.category||"Sans catégorie"))];
+      save();
+      renderDrawer();
+      showToast("Toutes catégories incluses.", 1600);
+    });
+    actions.querySelector("#catsNone").addEventListener("click", ()=>{
+      pushHistory("Cats none");
+      state.mode.includeCats = [];
+      save();
+      renderDrawer();
+      showToast("Pool libre (tout).", 1600);
+    });
+    wrap.appendChild(actions);
+
+    return wrap;
+  }
+
+  // =========================
+  // Sets (preset task bundles) + editable
+  // =========================
+  function renderDrawerSets(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Sets</span><span>pré-enregistrés</span></div>
+      <div class="tmini">Charge un set dans l'inbox, puis ajoute. Les sets sont **éditables** et enregistrés.</div>
+      <div class="list" id="setsList"></div>
+      <details>
+        <summary>Créer / éditer</summary>
+        <div class="inside">
+          <input id="setName" type="text" placeholder="Nom du set"/>
+          <textarea id="setLines" placeholder="Colle un contenu (catégories + tâches)"></textarea>
+          <div class="rowBtns">
+            <button class="btn topFx" id="setSaveNew">Enregistrer</button>
+            <button class="btn topFx" id="setUpdate" disabled>Mettre à jour</button>
+            <button class="btn" id="setClear">Vider</button>
+          </div>
+        </div>
+      </details>
+    `;
+
+    const list = wrap.querySelector("#setsList");
+    const nameI = wrap.querySelector("#setName");
+    const linesTA = wrap.querySelector("#setLines");
+    const saveNew = wrap.querySelector("#setSaveNew");
+    const updateBtn = wrap.querySelector("#setUpdate");
+    const clearBtn = wrap.querySelector("#setClear");
+
+    let editingId = null;
+
+    function renderSetsList(){
+      list.innerHTML = "";
+      (state.sets||[]).forEach(s=>{
+        const row = document.createElement("div");
+        row.className = "trow";
+        row.innerHTML = `
+          <div class="trowTop">
+            <div style="min-width:0;">
+              <div class="tname">${esc(s.name||"Set")}</div>
+              <div class="tmini">${esc((s.lines||[]).length)} ligne(s)</div>
+            </div>
+            <div class="tacts">
+              <button class="btn topFx" data-a="load">Charger</button>
+              <button class="btn topFx" data-a="edit">Éditer</button>
+              <button class="btn" data-a="del">X</button>
+            </div>
+          </div>
+        `;
+        row.querySelector('[data-a="load"]').addEventListener("click", ()=>{
+          state.scratch = (s.lines||[]).join("\n");
+          save();
+          showToast("Set chargé dans l'inbox.", 1600);
+          floatSay("Prêt à importer.", 2000);
+          setTab("inbox");
+        });
+        row.querySelector('[data-a="edit"]').addEventListener("click", ()=>{
+          editingId = s.id;
+          nameI.value = s.name||"";
+          linesTA.value = (s.lines||[]).join("\n");
+          updateBtn.disabled = false;
+          showToast("Mode édition.", 1400);
+        });
+        row.querySelector('[data-a="del"]').addEventListener("click", ()=>{
+          if(!confirm("Supprimer ce set ?")) return;
+          pushHistory("Supprimer set");
+          state.sets = (state.sets||[]).filter(x=>x.id!==s.id);
+          if(editingId===s.id){
+            editingId = null;
+            updateBtn.disabled = true;
+            nameI.value = "";
+            linesTA.value = "";
+          }
+          save();
+          renderDrawer();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    saveNew.addEventListener("click", ()=>{
+      const nm = cleanLine(nameI.value) || "Nouveau set";
+      const lines = String(linesTA.value||"").split(/\r?\n/).map(cleanLine).filter(Boolean);
+      if(!lines.length){
+        showToast("Rien à enregistrer.", 1600);
+        return;
+      }
+      pushHistory("Créer set");
+      state.sets = state.sets || [];
+      state.sets.push({ id: uid(), name: nm, lines });
+      save();
+      renderSetsList();
+      showToast("Set enregistré.", 1600);
+    });
+
+    updateBtn.addEventListener("click", ()=>{
+      if(!editingId) return;
+      const s = (state.sets||[]).find(x=>x.id===editingId);
+      if(!s) return;
+      const nm = cleanLine(nameI.value) || s.name || "Set";
+      const lines = String(linesTA.value||"").split(/\r?\n/).map(cleanLine).filter(Boolean);
+      if(!lines.length){
+        showToast("Le set ne peut pas être vide.", 1800);
+        return;
+      }
+      pushHistory("Mettre à jour set");
+      s.name = nm;
+      s.lines = lines;
+      save();
+      renderSetsList();
+      showToast("Set mis à jour.", 1600);
+    });
+
+    clearBtn.addEventListener("click", ()=>{
+      editingId = null;
+      updateBtn.disabled = true;
+      nameI.value = "";
+      linesTA.value = "";
+      showToast("Éditeur vidé.", 1200);
+    });
+
+    renderSetsList();
+
+    // preload scratch to inbox editor if available
+    if(state.scratch){
+      linesTA.value = state.scratch;
+    }
+
+    return wrap;
+  }
+
+  // =========================
+  // Mode (roulette vs order) + rules
+  // =========================
+  function renderDrawerMode(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+
+    const pick = state.mode?.pick || "roulette";
+    const orderBy = state.mode?.orderBy || "prio";
+
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Mode</span><span>sélection</span></div>
+      <div class="tmini">Choisis comment ELIMINATOR te propose la prochaine cible. Ne pas confondre “ordre” et “pression” : c'est juste une mécanique.</div>
+
+      <div class="rowBtns" style="justify-content:flex-start;">
+        <button class="btn topFx" id="mRoulette">${pick==="roulette" ? "✓ " : ""}Roulette</button>
+        <button class="btn topFx" id="mOrder">${pick==="order" ? "✓ " : ""}Ordre</button>
+      </div>
+
+      <details ${pick==="order" ? "open":""}>
+        <summary>Ordre — critères</summary>
+        <div class="inside">
+          <select id="orderBy">
+            <option value="prio">Priorité</option>
+            <option value="alpha">Alphabétique</option>
+            <option value="chrono">Chronologie</option>
+            <option value="cat">Catégorie</option>
+            <option value="eth">ETH restants</option>
+          </select>
+          <div class="tmini">L'ordre n'ôte pas la roulette : il la met en sommeil.</div>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Roulette — règles</summary>
+        <div class="inside">
+          <div class="tmini">Focus lock évite le “reroll compulsif”. Warm start force une première cible courte (si dispo).</div>
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="lockMinus">-10s</button>
+            <button class="btn topFx" id="lockPlus">+10s</button>
+            <span class="chip">Lock <b id="lockVal">—</b></span>
+          </div>
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="warmToggle">Warm start</button>
+            <span class="chip">Actif <b id="warmVal">—</b></span>
+          </div>
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="pinMinus">Pin -</button>
+            <button class="btn topFx" id="pinPlus">Pin +</button>
+            <span class="chip">Poids pin <b id="pinVal">—</b></span>
+          </div>
+        </div>
+      </details>
+    `;
+
+    const mRoulette = wrap.querySelector("#mRoulette");
+    const mOrder = wrap.querySelector("#mOrder");
+    const orderSel = wrap.querySelector("#orderBy");
+
+    mRoulette.addEventListener("click", ()=>{
+      pushHistory("Mode roulette");
+      state.mode.pick = "roulette";
+      save();
+      renderDrawer();
+      renderFocus();
+    });
+    mOrder.addEventListener("click", ()=>{
+      pushHistory("Mode ordre");
+      state.mode.pick = "order";
+      save();
+      renderDrawer();
+      renderFocus();
+    });
+
+    orderSel.value = orderBy;
+    orderSel.addEventListener("change", ()=>{
+      pushHistory("Order by");
+      state.mode.orderBy = orderSel.value;
+      save();
+      renderDrawer();
+    });
+
+    const lockVal = wrap.querySelector("#lockVal");
+    const warmVal = wrap.querySelector("#warmVal");
+    const pinVal = wrap.querySelector("#pinVal");
+
+    function refresh(){
+      const lockSec = clamp(Number(state.settings?.roulette?.focusLockSec||20), 0, 300);
+      lockVal.textContent = `${lockSec}s`;
+      warmVal.textContent = state.settings?.roulette?.warmStart ? "oui" : "non";
+      pinVal.textContent = String(clamp(Number(state.settings?.roulette?.pinWeight||2.4),1,6).toFixed(1));
+    }
+    refresh();
+
+    wrap.querySelector("#lockMinus").addEventListener("click", ()=>{
+      pushHistory("Lock -");
+      state.settings.roulette.focusLockSec = clamp(Number(state.settings.roulette.focusLockSec||20)-10, 0, 300);
+      save(); refresh();
+    });
+    wrap.querySelector("#lockPlus").addEventListener("click", ()=>{
+      pushHistory("Lock +");
+      state.settings.roulette.focusLockSec = clamp(Number(state.settings.roulette.focusLockSec||20)+10, 0, 300);
+      save(); refresh();
+    });
+    wrap.querySelector("#warmToggle").addEventListener("click", ()=>{
+      pushHistory("Warm toggle");
+      state.settings.roulette.warmStart = !state.settings.roulette.warmStart;
+      save(); refresh();
+    });
+    wrap.querySelector("#pinMinus").addEventListener("click", ()=>{
+      pushHistory("Pin -");
+      state.settings.roulette.pinWeight = clamp(Number(state.settings.roulette.pinWeight||2.4)-0.2, 1.0, 6.0);
+      save(); refresh();
+    });
+    wrap.querySelector("#pinPlus").addEventListener("click", ()=>{
+      pushHistory("Pin +");
+      state.settings.roulette.pinWeight = clamp(Number(state.settings.roulette.pinWeight||2.4)+0.2, 1.0, 6.0);
+      save(); refresh();
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Énergie (profile) — simple & non jugeant
+  // =========================
+  function renderDrawerEnergie(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Énergie</span><span>contextuelle</span></div>
+      <div class="tmini">Ce réglage sert à calibrer la roulette. Ce n'est ni un test ni un score. Juste une contrainte du moment.</div>
+
+      <details open>
+        <summary>Niveau d'énergie</summary>
+        <div class="inside">
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" data-e="1">basse</button>
+            <button class="btn topFx" data-e="2">moyenne</button>
+            <button class="btn topFx" data-e="3">haute</button>
+            <span class="chip">Actuel <b id="eNow">—</b></span>
+          </div>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Motivation (élan)</summary>
+        <div class="inside">
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" data-m="1">faible</button>
+            <button class="btn topFx" data-m="2">moyenne</button>
+            <button class="btn topFx" data-m="3">bonne</button>
+            <span class="chip">Actuel <b id="mNow">—</b></span>
+          </div>
+        </div>
+      </details>
+    `;
+
+    const eNow = wrap.querySelector("#eNow");
+    const mNow = wrap.querySelector("#mNow");
+
+    function refresh(){
+      eNow.textContent = energyLabel(state.energyProfile.level||2);
+      mNow.textContent = (state.energyProfile.motivation===1?"faible":state.energyProfile.motivation===2?"moyenne":"bonne");
+    }
+    refresh();
+
+    wrap.querySelectorAll("[data-e]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        pushHistory("Énergie");
+        state.energyProfile.level = Number(b.dataset.e);
+        save();
+        refresh();
+        renderFocus();
+        showToast("Énergie mise à jour.", 1200);
+      });
+    });
+
+    wrap.querySelectorAll("[data-m]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        pushHistory("Motivation");
+        state.energyProfile.motivation = Number(b.dataset.m);
+        save();
+        refresh();
+        showToast("Motivation mise à jour.", 1200);
+      });
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Params (theme, density, font, sounds, celebration)
+  // =========================
+  function renderDrawerParams(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+
+    const s = state.settings || {};
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Paramètres</span><span>UI/UX</span></div>
+
+      <details open>
+        <summary>Thème</summary>
+        <div class="inside">
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="thDark">${s.theme==="dark"?"✓ ":""}Sombre</button>
+            <button class="btn topFx" id="thLight">${s.theme==="light"?"✓ ":""}Clair</button>
+          </div>
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <select id="accentSel">
+              <option value="green">Accent (dark) : vert</option>
+              <option value="amber">Accent (dark) : ambre</option>
+              <option value="blue">Accent (dark) : bleu</option>
+              <option value="petrol">Accent (light) : pétrole</option>
+              <option value="indigo">Accent (light) : indigo</option>
+              <option value="graphite">Accent (light) : graphite</option>
+            </select>
+          </div>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Densité</summary>
+        <div class="inside">
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" data-d="compact">${s.density==="compact"?"✓ ":""}Compact</button>
+            <button class="btn topFx" data-d="comfort">${s.density==="comfort"?"✓ ":""}Confort</button>
+            <button class="btn topFx" data-d="cockpit">${s.density==="cockpit"?"✓ ":""}Cockpit</button>
+          </div>
+          <div class="tmini">Cockpit = 2 colonnes sur grands écrans. Sur mobile, ça reste simple.</div>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Taille de police</summary>
+        <div class="inside">
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="fsMinus">-</button>
+            <button class="btn topFx" id="fsPlus">+</button>
+            <span class="chip">Scale <b id="fsVal">—</b></span>
+          </div>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Sons & célébrations</summary>
+        <div class="inside">
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="sndToggle">Sons</button>
+            <span class="chip">Actif <b id="sndVal">—</b></span>
+          </div>
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="boomToggle">Boom</button>
+            <span class="chip">Boom <b id="boomVal">—</b></span>
+          </div>
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="celNone">Célébration: none</button>
+            <button class="btn topFx" id="celToast">toast</button>
+            <button class="btn topFx" id="celModal">modal</button>
+          </div>
+          <div class="tmini">Aucune célébration agressive. L'objectif n'est pas de “récompenser”, juste de marquer un état.</div>
+        </div>
+      </details>
+
+      <details>
+        <summary>Danger zone</summary>
+        <div class="inside">
+          <button class="btn" id="clearCalib">Effacer calibration</button>
+        </div>
+      </details>
+    `;
+
+    const accentSel = wrap.querySelector("#accentSel");
+    accentSel.value = s.accentPreset || (s.theme==="dark"?"green":"petrol");
+
+    function refresh(){
+      wrap.querySelector("#fsVal").textContent = String((state.settings.fontScale||1).toFixed(2));
+      wrap.querySelector("#sndVal").textContent = state.settings?.sound?.enabled ? "oui" : "non";
+      wrap.querySelector("#boomVal").textContent = state.settings?.sound?.boom ? "oui" : "non";
+    }
+    refresh();
+
+    wrap.querySelector("#thDark").addEventListener("click", ()=>{
+      pushHistory("Theme dark");
+      state.settings.theme = "dark";
+      if(!state.settings.accentPreset) state.settings.accentPreset="green";
+      save(); applySettingsToUI(); renderDrawer(); renderFocus();
+    });
+    wrap.querySelector("#thLight").addEventListener("click", ()=>{
+      pushHistory("Theme light");
+      state.settings.theme = "light";
+      if(!state.settings.accentPreset) state.settings.accentPreset="petrol";
+      save(); applySettingsToUI(); renderDrawer(); renderFocus();
+    });
+
+    accentSel.addEventListener("change", ()=>{
+      pushHistory("Accent");
+      state.settings.accentPreset = accentSel.value;
+      save(); applySettingsToUI(); renderFocus();
+      showToast("Accent mis à jour.", 1400);
+    });
+
+    wrap.querySelectorAll("[data-d]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        pushHistory("Density");
+        state.settings.density = b.dataset.d;
+        save(); applySettingsToUI(); renderDrawer(); renderFocus();
+      });
+    });
+
+    wrap.querySelector("#fsMinus").addEventListener("click", ()=>{
+      pushHistory("Font -");
+      state.settings.fontScale = clamp(Number(state.settings.fontScale||1)-0.05, 0.85, 1.25);
+      save(); applySettingsToUI(); refresh();
+    });
+    wrap.querySelector("#fsPlus").addEventListener("click", ()=>{
+      pushHistory("Font +");
+      state.settings.fontScale = clamp(Number(state.settings.fontScale||1)+0.05, 0.85, 1.25);
+      save(); applySettingsToUI(); refresh();
+    });
+
+    wrap.querySelector("#sndToggle").addEventListener("click", ()=>{
+      pushHistory("Sons toggle");
+      state.settings.sound.enabled = !state.settings.sound.enabled;
+      save(); refresh();
+    });
+    wrap.querySelector("#boomToggle").addEventListener("click", ()=>{
+      pushHistory("Boom toggle");
+      state.settings.sound.boom = !state.settings.sound.boom;
+      save(); refresh();
+    });
+
+    wrap.querySelector("#celNone").addEventListener("click", ()=>{
+      pushHistory("Celebration none");
+      state.settings.celebration.style = "none";
+      save(); showToast("OK", 900);
+    });
+    wrap.querySelector("#celToast").addEventListener("click", ()=>{
+      pushHistory("Celebration toast");
+      state.settings.celebration.style = "toast";
+      save(); showToast("OK", 900);
+    });
+    wrap.querySelector("#celModal").addEventListener("click", ()=>{
+      pushHistory("Celebration modal");
+      state.settings.celebration.style = "modal";
+      save(); showToast("OK", 900);
+    });
+
+    wrap.querySelector("#clearCalib").addEventListener("click", ()=>{
+      if(!confirm("Effacer l'historique de calibration ?")) return;
+      pushHistory("Clear calibration");
+      state.timeCalibration.entries = [];
+      state.timeCalibration.catStats = {};
+      save();
+      renderDrawer();
+      showToast("Calibration effacée.", 1600);
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Profiles (apply + save current as profile)
+  // =========================
+  function applyProfile(profileId){
+    const p = (state.profiles||[]).find(x=>x.id===profileId);
+    if(!p) return;
+    pushHistory("Appliquer profil");
+    state.settings = structuredClone(p.settings);
+    save();
+    applySettingsToUI();
+    renderAll();
+    showToast(`Profil: ${p.name}`, 1600);
+  }
+
+  function renderDrawerProfiles(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Profils</span><span>appliquer / éditer</span></div>
+      <div class="tmini">Tu peux appliquer un profil, ou enregistrer les paramètres actuels comme nouveau profil.</div>
+      <div class="list" id="pList"></div>
+      <details>
+        <summary>Créer un profil depuis l'état actuel</summary>
+        <div class="inside">
+          <input id="pName" type="text" placeholder="Nom du profil"/>
+          <div class="rowBtns">
+            <button class="btn topFx" id="pSave">Enregistrer</button>
+          </div>
+        </div>
+      </details>
+    `;
+
+    const pList = wrap.querySelector("#pList");
+    function renderList(){
+      pList.innerHTML = "";
+      (state.profiles||[]).forEach(p=>{
+        const row = document.createElement("div");
+        row.className = "trow";
+        row.innerHTML = `
+          <div class="trowTop">
+            <div style="min-width:0;">
+              <div class="tname">${esc(p.name||"Profil")}</div>
+              <div class="tmini">thème: ${esc(p.settings?.theme||"dark")} · densité: ${esc(p.settings?.density||"comfort")}</div>
+            </div>
+            <div class="tacts">
+              <button class="btn topFx" data-a="apply">Appliquer</button>
+              <button class="btn topFx" data-a="overwrite">Écraser</button>
+              <button class="btn" data-a="del">X</button>
+            </div>
+          </div>
+        `;
+        row.querySelector('[data-a="apply"]').addEventListener("click", ()=> applyProfile(p.id));
+
+        row.querySelector('[data-a="overwrite"]').addEventListener("click", ()=>{
+          if(!confirm("Remplacer ce profil par les paramètres actuels ?")) return;
+          pushHistory("Overwrite profil");
+          p.settings = structuredClone(state.settings);
+          save();
+          showToast("Profil mis à jour.", 1400);
+          renderList();
+        });
+
+        row.querySelector('[data-a="del"]').addEventListener("click", ()=>{
+          if(!confirm("Supprimer ce profil ?")) return;
+          pushHistory("Delete profil");
+          state.profiles = (state.profiles||[]).filter(x=>x.id!==p.id);
+          save();
+          renderList();
+        });
+
+        pList.appendChild(row);
+      });
+    }
+    renderList();
+
+    wrap.querySelector("#pSave").addEventListener("click", ()=>{
+      const nm = cleanLine(wrap.querySelector("#pName").value) || "Nouveau profil";
+      pushHistory("Créer profil");
+      state.profiles = state.profiles || [];
+      state.profiles.push({ id: uid(), name: nm, settings: structuredClone(state.settings) });
+      save();
+      renderList();
+      showToast("Profil enregistré.", 1600);
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Banks (editable text pools)
+  // =========================
+  function bankToText(arr){ return (arr||[]).join("\n"); }
+  function textToBank(txt){
+    return String(txt||"").split(/\r?\n/).map(cleanLine).filter(Boolean).slice(0, 80);
+  }
+
+  function renderDrawerBanks(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Textes</span><span>banques</span></div>
+      <div class="tmini">Ces textes sont **éditables**. Garder neutre. Pas de culpabilité. Pas de “hype” toxique.</div>
+
+      <details open>
+        <summary>Lignes flottantes</summary>
+        <div class="inside">
+          <textarea id="bLines"></textarea>
+        </div>
+      </details>
+
+      <details>
+        <summary>Fin (neutre)</summary>
+        <div class="inside">
+          <textarea id="bDone"></textarea>
+        </div>
+      </details>
+
+      <details>
+        <summary>Dépassement (neutre)</summary>
+        <div class="inside">
+          <textarea id="bOver"></textarea>
+        </div>
+      </details>
+
+      <details>
+        <summary>Retour kiffance</summary>
+        <div class="inside">
+          <textarea id="bKiffBack"></textarea>
+        </div>
+      </details>
+
+      <details>
+        <summary>Fin totale</summary>
+        <div class="inside">
+          <textarea id="bAll"></textarea>
+        </div>
+      </details>
+
+      <div class="rowBtns">
+        <button class="btn topFx" id="bSave">Enregistrer</button>
+        <button class="btn" id="bReset">Reset défaut</button>
+      </div>
+    `;
+
+    const b = state.banks || defaultBanks();
+    wrap.querySelector("#bLines").value = bankToText(b.lines);
+    wrap.querySelector("#bDone").value = bankToText(b.doneNeutral);
+    wrap.querySelector("#bOver").value = bankToText(b.overrunNeutral);
+    wrap.querySelector("#bKiffBack").value = bankToText(b.kiffReturn);
+    wrap.querySelector("#bAll").value = bankToText(b.finishAll);
+
+    wrap.querySelector("#bSave").addEventListener("click", ()=>{
+      pushHistory("Save banks");
+      state.banks = {
+        lines: textToBank(wrap.querySelector("#bLines").value),
+        doneNeutral: textToBank(wrap.querySelector("#bDone").value),
+        overrunNeutral: textToBank(wrap.querySelector("#bOver").value),
+        kiffReturn: textToBank(wrap.querySelector("#bKiffBack").value),
+        finishAll: textToBank(wrap.querySelector("#bAll").value),
+      };
+      save();
+      showToast("Textes enregistrés.", 1600);
+    });
+
+    wrap.querySelector("#bReset").addEventListener("click", ()=>{
+      if(!confirm("Revenir aux textes par défaut ?")) return;
+      pushHistory("Reset banks");
+      state.banks = defaultBanks();
+      save();
+      renderDrawer();
+      showToast("Textes par défaut.", 1600);
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Kiffance (rules + library editing)
+  // =========================
+  function renderDrawerKiffance(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+
+    const k = state.settings?.kiffance || {};
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Kiffance</span><span>régulateur borné</span></div>
+      <div class="tmini">Pas de scrolling. Pas de réseaux ouverts. Kiffance = pause courte + retour automatique.</div>
+
+      <details open>
+        <summary>Règles</summary>
+        <div class="inside">
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="kEnable">Activer</button>
+            <span class="chip">Actif <b id="kOn">—</b></span>
+          </div>
+
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="kMinMinus">Min -</button>
+            <button class="btn topFx" id="kMinPlus">Min +</button>
+            <span class="chip">Min budget <b id="kMinV">—</b></span>
+          </div>
+
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="kMaxMinus">Max -</button>
+            <button class="btn topFx" id="kMaxPlus">Max +</button>
+            <span class="chip">Max budget <b id="kMaxV">—</b></span>
+          </div>
+
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="kConMinus">Consec -</button>
+            <button class="btn topFx" id="kConPlus">Consec +</button>
+            <span class="chip">Max conséc. <b id="kConV">—</b></span>
+          </div>
+
+          <div class="rowBtns" style="justify-content:flex-start;">
+            <button class="btn topFx" id="kShort">Overrun → plus court</button>
+            <span class="chip">Actif <b id="kShortV">—</b></span>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>Bibliothèque (éditable)</summary>
+        <div class="inside">
+          <div class="tmini">Format: une ligne = “label — duréeMin”. Ex: “Marche rapide — 5”.</div>
+
+          <details open>
+            <summary>Décharge</summary>
+            <div class="inside"><textarea id="kDecharge"></textarea></div>
+          </details>
+          <details>
+            <summary>Micro-cognitive</summary>
+            <div class="inside"><textarea id="kCognitive"></textarea></div>
+          </details>
+          <details>
+            <summary>Sociale ultra-contrôlée</summary>
+            <div class="inside"><textarea id="kSocial"></textarea></div>
+          </details>
+          <details>
+            <summary>Sens / recentrage</summary>
+            <div class="inside"><textarea id="kSens"></textarea></div>
+          </details>
+
+          <div class="rowBtns">
+            <button class="btn topFx" id="kSaveLib">Enregistrer</button>
+            <button class="btn" id="kResetLib">Reset défaut</button>
+          </div>
+        </div>
+      </details>
+    `;
+
+    function refresh(){
+      wrap.querySelector("#kOn").textContent = k.enabled ? "oui" : "non";
+      wrap.querySelector("#kMinV").textContent = String(k.budgetMinEth||20);
+      wrap.querySelector("#kMaxV").textContent = String(k.budgetMaxEth||35);
+      wrap.querySelector("#kConV").textContent = String(k.maxConsecutive||2);
+      wrap.querySelector("#kShortV").textContent = k.shortOnOverrun ? "oui" : "non";
+    }
+    refresh();
+
+    wrap.querySelector("#kEnable").addEventListener("click", ()=>{
+      pushHistory("Kiff enable");
+      state.settings.kiffance.enabled = !state.settings.kiffance.enabled;
+      save();
+      renderDrawer();
+    });
+
+    wrap.querySelector("#kMinMinus").addEventListener("click", ()=>{
+      pushHistory("Kiff min -");
+      state.settings.kiffance.budgetMinEth = clamp(Number(k.budgetMinEth||20)-2, 10, 180);
+      if(state.settings.kiffance.budgetMaxEth < state.settings.kiffance.budgetMinEth){
+        state.settings.kiffance.budgetMaxEth = state.settings.kiffance.budgetMinEth;
+      }
+      save(); renderDrawer();
+    });
+    wrap.querySelector("#kMinPlus").addEventListener("click", ()=>{
+      pushHistory("Kiff min +");
+      state.settings.kiffance.budgetMinEth = clamp(Number(k.budgetMinEth||20)+2, 10, 180);
+      save(); renderDrawer();
+    });
+    wrap.querySelector("#kMaxMinus").addEventListener("click", ()=>{
+      pushHistory("Kiff max -");
+      state.settings.kiffance.budgetMaxEth = clamp(Number(k.budgetMaxEth||35)-2, 10, 180);
+      if(state.settings.kiffance.budgetMaxEth < state.settings.kiffance.budgetMinEth){
+        state.settings.kiffance.budgetMinEth = state.settings.kiffance.budgetMaxEth;
+      }
+      save(); renderDrawer();
+    });
+    wrap.querySelector("#kMaxPlus").addEventListener("click", ()=>{
+      pushHistory("Kiff max +");
+      state.settings.kiffance.budgetMaxEth = clamp(Number(k.budgetMaxEth||35)+2, 10, 180);
+      save(); renderDrawer();
+    });
+
+    wrap.querySelector("#kConMinus").addEventListener("click", ()=>{
+      pushHistory("Kiff con -");
+      state.settings.kiffance.maxConsecutive = clamp(Number(k.maxConsecutive||2)-1, 0, 5);
+      save(); renderDrawer();
+    });
+    wrap.querySelector("#kConPlus").addEventListener("click", ()=>{
+      pushHistory("Kiff con +");
+      state.settings.kiffance.maxConsecutive = clamp(Number(k.maxConsecutive||2)+1, 0, 5);
+      save(); renderDrawer();
+    });
+
+    wrap.querySelector("#kShort").addEventListener("click", ()=>{
+      pushHistory("Kiff short");
+      state.settings.kiffance.shortOnOverrun = !state.settings.kiffance.shortOnOverrun;
+      save(); renderDrawer();
+    });
+
+    // Library
+    const lib = state.kiffanceLibrary || defaultKiffanceLibrary();
+
+    function libToText(arr){
+      return (arr||[]).map(x=> `${x.label} — ${x.durationMin||5}`).join("\n");
+    }
+    function textToLib(txt){
+      const lines = String(txt||"").split(/\r?\n/).map(cleanLine).filter(Boolean).slice(0, 60);
+      const out = [];
+      for(const ln of lines){
+        const parts = ln.split("—").map(s=>s.trim());
+        const label = parts[0] || "";
+        const dur = clamp(parseInt(parts[1],10)||5, 5, 20);
+        if(label) out.push({ label, durationMin: dur, tags:[], difficulty:2 });
+      }
+      return out;
+    }
+
+    wrap.querySelector("#kDecharge").value  = libToText(lib.decharge);
+    wrap.querySelector("#kCognitive").value = libToText(lib.microCognitive);
+    wrap.querySelector("#kSocial").value    = libToText(lib.socialeUltraControlee);
+    wrap.querySelector("#kSens").value      = libToText(lib.sensRecentrage);
+
+    wrap.querySelector("#kSaveLib").addEventListener("click", ()=>{
+      pushHistory("Save kiff lib");
+      state.kiffanceLibrary = {
+        decharge: textToLib(wrap.querySelector("#kDecharge").value),
+        microCognitive: textToLib(wrap.querySelector("#kCognitive").value),
+        socialeUltraControlee: textToLib(wrap.querySelector("#kSocial").value),
+        sensRecentrage: textToLib(wrap.querySelector("#kSens").value)
+      };
+      save();
+      showToast("Bibliothèque kiffance enregistrée.", 1800);
+    });
+
+    wrap.querySelector("#kResetLib").addEventListener("click", ()=>{
+      if(!confirm("Reset bibliothèque kiffance ?")) return;
+      pushHistory("Reset kiff lib");
+      state.kiffanceLibrary = defaultKiffanceLibrary();
+      save();
+      renderDrawer();
+      showToast("Bibliothèque par défaut.", 1800);
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Calibration (stats + recent entries)
+  // =========================
+  function renderDrawerCalib(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Calibration</span><span>apprentissage</span></div>
+      <div class="tmini">Les écarts servent à améliorer les futures estimations. Ils ne servent à rien d'autre.</div>
+      <details open>
+        <summary>Stats par catégorie</summary>
+        <div class="inside" id="calibStats"></div>
+      </details>
+      <details>
+        <summary>Dernières entrées</summary>
+        <div class="inside">
+          <div class="list" id="calibList"></div>
+        </div>
+      </details>
+    `;
+
+    const statsDiv = wrap.querySelector("#calibStats");
+    const stats = state.timeCalibration?.catStats || {};
+    const cats = Object.keys(stats).sort((a,b)=>a.localeCompare(b,"fr"));
+    if(!cats.length){
+      statsDiv.innerHTML = `<div class="tmini">Aucune donnée. Terminer une tâche pour commencer la calibration.</div>`;
+    } else {
+      const list = document.createElement("div");
+      list.className = "list";
+      cats.forEach(cat=>{
+        const st = stats[cat];
+        const row = document.createElement("div");
+        row.className = "trow";
+        const bias = (st.avgDeltaEth||0);
+        const ratio = (st.avgRatio||1);
+        row.innerHTML = `
+          <div class="trowTop">
+            <div style="min-width:0;">
+              <div class="tname">${esc(cat)}</div>
+              <div class="tmini">n=${esc(String(st.n||0))} · biais moyen (real-est) ≈ ${esc(bias.toFixed(1))} ETH · ratio ≈ ${esc(ratio.toFixed(2))}</div>
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+      statsDiv.appendChild(list);
+    }
+
+    const calibList = wrap.querySelector("#calibList");
+    (state.timeCalibration?.entries||[])
+      .slice()
+      .sort((a,b)=>(b.ts||0)-(a.ts||0))
+      .slice(0, 30)
+      .forEach(e=>{
+        const row = document.createElement("div");
+        row.className = "trow";
+        row.innerHTML = `
+          <div class="trowTop">
+            <div style="min-width:0;">
+              <div class="tname">${esc(e.title||"")}</div>
+              <div class="tmini">
+                <span>${esc(e.category||"Sans catégorie")}</span>
+                <span>·</span>
+                <span>est ${esc(String(e.estEth))} ETH</span>
+                <span>·</span>
+                <span>réel ${esc(String(e.realEth))} ETH</span>
+                <span>·</span>
+                <span>Δ ${esc(String(e.deltaEth))} ETH</span>
+              </div>
+            </div>
+          </div>
+        `;
+        calibList.appendChild(row);
+      });
+
+    return wrap;
+  }
+
+  // =========================
+  // History (events + undo/redo counts)
+  // =========================
+  function renderDrawerHist(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Historique</span><span>journal</span></div>
+      <div class="tmini">Journal minimal des actions. Utile pour le “je fais quoi déjà ?”.</div>
+      <div class="rowBtns" style="justify-content:flex-start;">
+        <span class="chip">Undo <b>${state.history.undo.length}</b></span>
+        <span class="chip">Redo <b>${state.history.redo.length}</b></span>
+        <button class="btn topFx" id="evClear">Vider</button>
+      </div>
+      <details open>
+        <summary>Derniers événements</summary>
+        <div class="inside">
+          <div class="list" id="evList"></div>
+        </div>
+      </details>
+    `;
+
+    const list = wrap.querySelector("#evList");
+    (state.events||[])
+      .slice()
+      .sort((a,b)=>(b.t||0)-(a.t||0))
+      .slice(0, 80)
+      .forEach(e=>{
+        const d = new Date(e.t||0);
+        const hh = String(d.getHours()).padStart(2,"0");
+        const mm = String(d.getMinutes()).padStart(2,"0");
+        const row = document.createElement("div");
+        row.className = "trow";
+        row.innerHTML = `
+          <div class="tmini"><b>${hh}:${mm}</b> · ${esc(e.text||"")}</div>
+        `;
+        list.appendChild(row);
+      });
+
+    wrap.querySelector("#evClear").addEventListener("click", ()=>{
+      if(!confirm("Vider l'historique des événements ?")) return;
+      pushHistory("Clear events");
+      state.events = [];
+      save();
+      renderDrawer();
+      showToast("Historique vidé.", 1400);
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Rapport (daily report minimal)
+  // =========================
+  function renderDrawerRapport(){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+
+    const today = state.day?.id || isoDay();
+    const done = state.tasks.filter(t=>t.done && t.doneAt && isoDay(new Date(t.doneAt))===today);
+    const entries = (state.timeCalibration?.entries||[]).filter(e=> isoDay(new Date(e.ts||0))===today);
+
+    const totalRealEth = entries.reduce((a,e)=>a+(e.realEth||0),0);
+    const totalRealMs = entries.reduce((a,e)=>a+(e.realMs||0),0);
+
+    wrap.innerHTML = `
+      <div class="cardTitle"><span>Rapport</span><span>${esc(today)}</span></div>
+      <div class="tmini">Auto-rapport neutre. Juste ce qui est fait, combien de temps, et à quelle heure.</div>
+
+      <div class="rowBtns" style="justify-content:flex-start;">
+        <span class="chip">Fait <b>${done.length}</b></span>
+        <span class="chip">ETH réels <b>${totalRealEth}</b></span>
+        <span class="chip">Temps <b>${hhmmHuman(totalRealMs)}</b></span>
+      </div>
+
+      <details open>
+        <summary>Détails</summary>
+        <div class="inside">
+          <textarea id="reportTA" style="min-height:220px;"></textarea>
+          <div class="rowBtns">
+            <button class="btn topFx" id="copyReport">Copier</button>
+          </div>
+        </div>
+      </details>
+    `;
+
+    const lines = [];
+    lines.push(`ELIMINATOR — rapport ${today}`);
+    lines.push(`Fait: ${done.length} tâche(s)`);
+    lines.push(`Temps réel total: ${hhmmHuman(totalRealMs)} (${totalRealEth} ETH)`);
+    lines.push(`—`);
+
+    // include per-task summary (from calibration entries)
+    entries
+      .slice()
+      .sort((a,b)=>(a.ts||0)-(b.ts||0))
+      .forEach(e=>{
+        const d = new Date(e.ts||0);
+        const hh = String(d.getHours()).padStart(2,"0");
+        const mm = String(d.getMinutes()).padStart(2,"0");
+        lines.push(`${hh}:${mm} · ${e.title} [${e.category}] · est ${e.estEth} ETH · réel ${e.realEth} ETH · Δ ${e.deltaEth} ETH`);
+      });
+
+    const ta = wrap.querySelector("#reportTA");
+    ta.value = lines.join("\n");
+
+    wrap.querySelector("#copyReport").addEventListener("click", async ()=>{
+      try{
+        await navigator.clipboard.writeText(ta.value);
+        showToast("Rapport copié.", 1400);
+      }catch{
+        ta.select();
+        document.execCommand("copy");
+        showToast("Rapport copié.", 1400);
+      }
+    });
+
+    return wrap;
+  }
+
+  // =========================
+  // Drawer: router
+  // =========================
+  function renderDrawer(){
+    renderTabs();
+    drawerBody.innerHTML = "";
+
+    const key = state.ui.activeTab || "inbox";
+    let view = null;
+
+    if(key==="inbox") view = renderDrawerInbox();
+    else if(key==="liste") view = renderDrawerList();
+    else if(key==="cats") view = renderDrawerCats();
+    else if(key==="sets") view = renderDrawerSets();
+    else if(key==="mode") view = renderDrawerMode();
+    else if(key==="energie") view = renderDrawerEnergie();
+    else if(key==="params") view = renderDrawerParams();
+    else if(key==="profiles") view = renderDrawerProfiles();
+    else if(key==="banks") view = renderDrawerBanks();
+    else if(key==="kiff") view = renderDrawerKiffance();
+    else if(key==="calib") view = renderDrawerCalib();
+    else if(key==="hist") view = renderDrawerHist();
+    else if(key==="rapport") view = renderDrawerRapport();
+    else view = renderDrawerInbox();
+
+    drawerBody.appendChild(view);
+  }
+
+  // =========================
+  // Drawer open/close
+  // =========================
+  function openDrawer(){
+    overlay.classList.add("show");
+    drawer.classList.add("show");
+    renderDrawer();
+  }
+  function closeDrawer(){
+    overlay.classList.remove("show");
+    drawer.classList.remove("show");
+  }
+
+  overlay.addEventListener("click", closeDrawer);
+  btnClose.addEventListener("click", closeDrawer);
+
+  btnMenu.addEventListener("click", openDrawer);
+  btnMiniMenu.addEventListener("click", openDrawer);
+
+  // =========================
+  // Notes (minimal)
+  // =========================
+  function editNotes(){
+    const t = getTask(state.focusId);
+    if(!t) return;
+    const txt = prompt("Notes (local) :", t.notes||"");
+    if(txt===null) return;
+    pushHistory("Notes");
+    t.notes = String(txt||"").slice(0, 1200);
+    save();
+    renderAll();
+    showToast("Notes enregistrées.", 1400);
+  }
+
+  // =========================
+  // Feedback modals
+  // =========================
+  let modalTimer = null;
+
+  function showModal({title, bodyHTML, note, showOk=false, overlayClass=""}){
+    if(modalTimer){ clearInterval(modalTimer); modalTimer=null; }
+    modalOverlay.className = "modalOverlay show " + (overlayClass||"");
+    modalTitle.textContent = title || "—";
+    modalBody.innerHTML = bodyHTML || "";
+    modalNote.textContent = note || "—";
+    modalOk.style.display = showOk ? "inline-flex" : "none";
+  }
+
+  function hideModal(){
+    if(modalTimer){ clearInterval(modalTimer); modalTimer=null; }
+    modalOverlay.className = "modalOverlay";
+    modalBody.innerHTML = "";
+  }
+
+  function showCalibrationModal(entry){
+    const body = `
+      <div class="kv">
+        <div class="k">Estimation</div><div class="v">${esc(entry.estEth)} ETH · ${esc(hhmmHuman(entry.estMs))}</div>
+        <div class="k">Temps réel</div><div class="v">${esc(entry.realEth)} ETH · ${esc(hhmmHuman(entry.realMs))}</div>
+        <div class="k">Écart</div><div class="v">${esc(entry.deltaEth)} ETH</div>
+        <div class="k">Catégorie</div><div class="v">${esc(entry.category||"Sans catégorie")}</div>
+      </div>
+    `;
+
+    const note = pick(state.banks.doneNeutral);
+
+    const style = state.settings?.celebration?.style || "modal";
+    const autoClose = clamp(Number(state.settings?.celebration?.autoCloseMs||2200), 800, 8000);
+
+    if(style === "none"){
+      // no modal: just toast
+      showToast(note, 2000);
+      return;
+    }
+    if(style === "toast"){
+      showToast(`OK. ${note}`, 2400);
+      return;
+    }
+
+    showModal({
+      title: "Calibration",
+      bodyHTML: body,
+      note,
+      showOk: false,
+      overlayClass: ""
+    });
+
+    setTimeout(()=> hideModal(), autoClose);
+  }
+
+  function showKiffanceModal(fam, item, durMs){
+    const badge = `<div class="kiffBadge">Zone de la kiffance</div>`;
+    const body = `
+      ${badge}
+      <div class="tmini" style="margin-top:6px;">
+        Famille: <b>${esc(fam)}</b>
+      </div>
+      <div class="tname" style="margin-top:4px;">${esc(item.label)}</div>
+      <div class="tmini" style="margin-top:6px;">Durée: <b id="kiffLeft">—</b> (fermeture automatique)</div>
+    `;
+    showModal({
+      title: "Pause bornée",
+      bodyHTML: body,
+      note: "Pas de fermeture manuelle. La pause finit et on reprend.",
+      showOk: false,
+      overlayClass: "kiffOverlay"
+    });
+
+    const endAt = now() + durMs;
+
+    function tick(){
+      const left = Math.max(0, endAt - now());
+      const kEl = document.getElementById("kiffLeft");
+      if(kEl) kEl.textContent = hhmmHuman(left);
+      if(left<=0){
+        clearInterval(modalTimer);
+        modalTimer = null;
+        endKiffance();
+      }
+    }
+    tick();
+    modalTimer = setInterval(tick, 250);
+  }
+
+  modalOk.addEventListener("click", hideModal);
+
+  // =========================
+  // Toast + float lines
+  // =========================
+  let toastT = null;
+  function showToast(msg, ms=1600){
+    if(toastT) clearTimeout(toastT);
+    toast.textContent = msg;
+    toast.classList.add("show");
+    toastT = setTimeout(()=> toast.classList.remove("show"), ms);
+  }
+
+  let floatT = null;
+  function floatSay(msg, ms=2200){
+    if(floatT) clearTimeout(floatT);
+    floatLine.textContent = msg || " ";
+    floatLine.classList.add("show");
+    floatT = setTimeout(()=> floatLine.classList.remove("show"), ms);
+  }
+
+  function pick(arr){
+    arr = arr || [];
+    if(!arr.length) return "";
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  // =========================
+  // FX (simple, sober)
+  // =========================
+  function resizeFX(){
+    fxCanvas.width = window.innerWidth * devicePixelRatio;
+    fxCanvas.height = window.innerHeight * devicePixelRatio;
+    fx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  }
+  window.addEventListener("resize", resizeFX);
+  resizeFX();
+
+  function flashSoft(){
+    // subtle flash overlay on canvas
+    let a = 0.20;
+    const start = now();
+    const dur = 220;
+    function step(){
+      const t = now() - start;
+      const k = 1 - clamp(t/dur, 0, 1);
+      fx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+      fx.globalAlpha = a*k;
+      fx.fillStyle = "#ffffff";
+      fx.fillRect(0,0,fxCanvas.width,fxCanvas.height);
+      fx.globalAlpha = 1;
+      if(t < dur) requestAnimationFrame(step);
+      else fx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function confetti(intensity=1){
+    // minimalist particles, no colors specified in code requirement? (we keep grayscale-ish)
+    const count = Math.floor(24 * intensity);
+    const parts = [];
+    for(let i=0;i<count;i++){
+      parts.push({
+        x: window.innerWidth/2 + (Math.random()-0.5)*80,
+        y: window.innerHeight*0.25 + (Math.random()-0.5)*40,
+        vx: (Math.random()-0.5)*4,
+        vy: -Math.random()*5 - 2,
+        g: 0.14 + Math.random()*0.10,
+        life: 700 + Math.random()*500
+      });
+    }
+    const start = now();
+    function step(){
+      const t = now()-start;
+      fx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+      for(const p of parts){
+        const age = t;
+        if(age > p.life) continue;
+        p.vy += p.g;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const alpha = 1 - (age/p.life);
+        fx.globalAlpha = alpha*0.75;
+        fx.fillStyle = "rgba(255,255,255,0.9)";
+        fx.fillRect(p.x, p.y, 3, 3);
+      }
+      fx.globalAlpha = 1;
+      if(t < 1200) requestAnimationFrame(step);
+      else fx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // =========================
+  // Audio (WebAudio, no files)
+  // =========================
+  let audioCtx = null;
+  function ensureAudio(){
+    if(audioCtx) return audioCtx;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playBoom(){
+    try{
+      const ctx = ensureAudio();
+      const t0 = ctx.currentTime;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(220, t0);
+      o.frequency.exponentialRampToValueAtTime(70, t0+0.16);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(clamp(Number(state.settings?.sound?.volume||0.55),0.05,1.0)*0.25, t0+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+0.22);
+      o.connect(g).connect(ctx.destination);
+      o.start(t0);
+      o.stop(t0+0.25);
+    }catch{}
+  }
+
+  // =========================
+  // Wiring: top actions
+  // =========================
+  btnReset.addEventListener("click", resetAll);
+  btnRoulette.addEventListener("click", roulette);
+  btnDego.addEventListener("click", degoOne);
+  btnNotes.addEventListener("click", editNotes);
+  btnDone.addEventListener("click", ()=> {
+    const t = getTask(state.focusId);
+    if(!t) return;
+    finishTask(t.id);
+  });
+  btnSkip.addEventListener("click", skip);
+
+  // Est gate actions (no keyboard input)
+  estMinus1.addEventListener("click", ()=> adjustEstimate(-1));
+  estPlus1.addEventListener("click", ()=> adjustEstimate(+1));
+  estPlus2.addEventListener("click", ()=> adjustEstimate(+2));
+  estPlus5.addEventListener("click", ()=> adjustEstimate(+5));
+  estKeep.addEventListener("click", ()=> { showToast("OK. Garde.", 1200); });
+  estStart.addEventListener("click", startFocusFromEstimate);
+
+  // Undo/redo
+  btnUndo.addEventListener("click", undo);
+  btnRedo.addEventListener("click", redo);
+
+  // Kiff test button in cockpit
+  btnKiffTest.addEventListener("click", ()=>{
+    if(!state.settings?.kiffance?.enabled){
+      showToast("Kiffance désactivée.", 1400);
+      return;
+    }
+    startKiffance(false);
+  });
+
+  // =========================
+  // Loop: time HUD updates while focusing
+  // =========================
+  function tick(){
+    if(isFocusing()){
+      renderTimeHud();
+      renderFocus(); // includes progress bar (linear)
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // =========================
+  // Boot
+  // =========================
+  function boot(){
+    applySettingsToUI();
+    ensureDay();
+
+    // If we have a focusId but no session: enforce estimation gate
+    const t = getTask(state.focusId);
+    if(t && state.focusSession.state==="idle"){
+      enterPendingEstimate(t.id, "Boot");
+    }
+
+    renderAll();
+    requestAnimationFrame(tick);
+  }
+
+  boot();
+
+})();
+</script>
+</body>
+</html>
